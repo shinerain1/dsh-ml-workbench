@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "title": {
+    "en": "DSH ML Workbench",
+    "zh": "DSH 机器学习实验工作台"
+  },
+  "description": {
+    "en": "Community MLflow experiment workflow adapter",
+    "zh": "基于 MLflow 的社区实验流程适配插件"
+  },
+  "plugins": [
+    {
+      "name": "dsh-ml-workbench",
+      "title": {
+        "en": "ML Experiment Workbench",
+        "zh": "机器学习实验工作台"
+      },
+      "description": {
+        "en": "Track, branch, compare and reproduce local CSV experiments with MLflow. Python backend required.",
+        "zh": "基于 MLflow 创建、追踪、分支、比较和复现本地 CSV 实验。需另装 Python 后端。"
+      },
+      "author": "shinerain1",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMxNzNmNTIiLz48cGF0aCBkPSJNMTYgNDZoMzNNMjAgNDZWMzFtMTIgMTVWMjBtMTIgMjZWMTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzZjZTViMSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjI1IiByPSIzIiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iMzIiIGN5PSIxNCIgcj0iMyIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjQ0IiBjeT0iOCIgcj0iMyIgZmlsbD0iI2ZmZiIvPjwvc3ZnPgo=",
+      "homepage": "https://github.com/shinerain1/dsh-ml-workbench#readme",
+      "repository": {
+        "url": "https://github.com/shinerain1/dsh-ml-workbench"
+      },
+      "metadata": {
+        "keywords": [
+          "MLflow",
+          "CSV",
+          "classification",
+          "regression",
+          "experiments",
+          "机器学习"
+        ]
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1794254123,
+          "engines": {
+            "dsh": ">=0.2.2-alpha.3 <0.3.0"
+          },
+          "source": {
+            "type": "git",
+            "url": "https://github.com/shinerain1/dsh-ml-workbench",
+            "commit": "bf96d801f09d2e516ad2247333dea013f5ebfeae"
+          }
+        }
+      ]
+    }
+  ]
+}
