@@ -1,0 +1,8 @@
+include README.md README.zh.md LICENSE requirements.lock
+recursive-include docs *.md *.json
+recursive-include examples *.py
+recursive-include tests *.py
+recursive-include scripts *.py *.mjs
+global-exclude *.pyc
+prune .verification
+prune node_modules

@@ -1,0 +1,15 @@
+.venv*/
+node_modules/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.tgz
+.workbench/
+.verification/
+.env
+.env.*
+!examples/*.example

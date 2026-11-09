@@ -1,0 +1,337 @@
+{
+  "protocol_version": 1,
+  "schemas": {
+    "rpc": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Protocol Version",
+          "type": "integer"
+        },
+        "operation": {
+          "enum": [
+            "health",
+            "create",
+            "start",
+            "get",
+            "list",
+            "cancel",
+            "branch",
+            "compare",
+            "export"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "args": {
+          "additionalProperties": true,
+          "title": "Args",
+          "type": "object"
+        }
+      },
+      "required": [
+        "operation"
+      ],
+      "title": "RpcRequest",
+      "type": "object"
+    },
+    "create": {
+      "$defs": {
+        "Preprocessing": {
+          "additionalProperties": false,
+          "properties": {
+            "numeric_imputer": {
+              "default": "median",
+              "enum": [
+                "median",
+                "mean",
+                "most_frequent"
+              ],
+              "title": "Numeric Imputer",
+              "type": "string"
+            },
+            "scale_numeric": {
+              "default": true,
+              "title": "Scale Numeric",
+              "type": "boolean"
+            },
+            "max_categories": {
+              "default": 64,
+              "maximum": 4096,
+              "minimum": 2,
+              "title": "Max Categories",
+              "type": "integer"
+            },
+            "drop_columns": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Drop Columns",
+              "type": "array"
+            }
+          },
+          "title": "Preprocessing",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "dataset_path": {
+          "minLength": 1,
+          "title": "Dataset Path",
+          "type": "string"
+        },
+        "target": {
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        },
+        "task": {
+          "enum": [
+            "classification",
+            "regression"
+          ],
+          "title": "Task",
+          "type": "string"
+        },
+        "name": {
+          "default": "experiment",
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "experiment_name": {
+          "default": "DSH ML workbench",
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Experiment Name",
+          "type": "string"
+        },
+        "model": {
+          "default": "random_forest",
+          "title": "Model",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": true,
+          "title": "Params",
+          "type": "object"
+        },
+        "preprocessing": {
+          "$ref": "#/$defs/Preprocessing"
+        },
+        "seed": {
+          "default": 42,
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "test_fraction": {
+          "default": 0.2,
+          "exclusiveMaximum": 0.5,
+          "exclusiveMinimum": 0.0,
+          "title": "Test Fraction",
+          "type": "number"
+        },
+        "preprocessor_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preprocessor Path"
+        },
+        "estimator_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimator Path"
+        },
+        "request_key": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Request Key"
+        }
+      },
+      "required": [
+        "dataset_path",
+        "target",
+        "task"
+      ],
+      "title": "CreateRequest",
+      "type": "object"
+    },
+    "start": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "RunRequest",
+      "type": "object"
+    },
+    "get": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "RunRequest",
+      "type": "object"
+    },
+    "cancel": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "RunRequest",
+      "type": "object"
+    },
+    "list": {
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "ListRequest",
+      "type": "object"
+    },
+    "branch": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "changes": {
+          "additionalProperties": true,
+          "title": "Changes",
+          "type": "object"
+        },
+        "reuse_preprocessing": {
+          "default": true,
+          "title": "Reuse Preprocessing",
+          "type": "boolean"
+        },
+        "request_key": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Request Key"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "BranchRequest",
+      "type": "object"
+    },
+    "compare": {
+      "additionalProperties": false,
+      "properties": {
+        "run_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "minItems": 2,
+          "title": "Run Ids",
+          "type": "array"
+        },
+        "metric": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Metric"
+        }
+      },
+      "required": [
+        "run_ids"
+      ],
+      "title": "CompareRequest",
+      "type": "object"
+    },
+    "export": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "include_data": {
+          "default": false,
+          "title": "Include Data",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "ExportRequest",
+      "type": "object"
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  }
+}

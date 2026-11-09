@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dsh-ml-workbench"
+version = "0.1.0"
+description = "MLflow experiment workflows adapted for DeepSeek Harness agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "shinerain1"}]
+dependencies = [
+  "mlflow==3.18.0",
+  "scikit-learn>=1.5,<2",
+  "pandas>=2.2,<3",
+  "pydantic>=2.10,<3",
+  "psutil>=6,<8",
+  "filelock>=3.16,<4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "build>=1.2,<2", "ruff>=0.12,<1"]
+
+[project.scripts]
+mlwb = "dsh_ml_workbench.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Numerical thread settings must be established before scientific imports.
+"python/dsh_ml_workbench/engine.py" = ["E402"]
