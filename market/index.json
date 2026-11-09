@@ -37,6 +37,18 @@
       },
       "versions": [
         {
+          "version": "0.2.0",
+          "publishTimestamp": 1794256758,
+          "engines": {
+            "dsh": ">=0.2.2-alpha.3 <0.3.0"
+          },
+          "source": {
+            "type": "git",
+            "url": "https://github.com/shinerain1/dsh-ml-workbench",
+            "commit": "9e38f4c250fd6311c4b5b6599fcd7d42d99bdd2f"
+          }
+        },
+        {
           "version": "0.1.0",
           "publishTimestamp": 1794254123,
           "engines": {
