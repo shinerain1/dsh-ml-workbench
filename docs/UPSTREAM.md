@@ -2,16 +2,16 @@
 
 The contribution is a DSH adapter for established machine-learning tooling, not new learning algorithms or a replacement experiment tracker. These upstream repositories and their official documentation were reviewed before implementing the adapter.
 
-| Project | Role in 0.1.0 | Reused or informed component |
+| Project | Role in 0.2.0 | Reused or informed component |
 |---|---|---|
 | [MLflow](https://github.com/mlflow/mlflow) (Apache-2.0) | **Runtime dependency**, pinned 3.18.0 | Native `MlflowClient` experiment/run APIs, parameters, metrics, parent-run tags, artifacts, SQLite tracking, `mlflow.sklearn.save_model/load_model`, MLmodel flavor and signature |
 | [scikit-learn](https://github.com/scikit-learn/scikit-learn) (BSD-3-Clause) | **Runtime dependency** | Estimators, ColumnTransformer, Pipeline, imputers, encoders, scalers, train_test_split and classification/regression metrics |
-| [Optuna](https://github.com/optuna/optuna) (MIT) | Reviewed; **not integrated** | Study/trial lifecycle and storage suggest a future mapping from a study to child MLflow runs; adding a dependency without a supported tuning workflow was avoided |
+| [Optuna](https://github.com/optuna/optuna) (MIT) | **Runtime dependency**, pinned 5.0.0 | Native TPE sampler, ask/suggest/tell lifecycle, study load/create and SQLite RDBStorage; every fitted trial links to a child MLflow run |
 | [DVC](https://github.com/treeverse/dvc) (Apache-2.0) | Reviewed; **not integrated** | Data/parameter/pipeline versioning informed immutable input manifests. Version 0.1.0 uses local copied CSV snapshots, not a DVC remote or cache implementation |
 | [RD-Agent](https://github.com/microsoft/RD-Agent) (MIT) | Reviewed; **not integrated** | Research/development iteration informed the explicit propose–run–evaluate–branch workflow. DSH retains the agent role; no RD-Agent orchestration code is bundled |
 | [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) | Plugin host and SDK | Cordis `apply`/dependency injection/disposal, `defineTool`, JSON parameter schemas, generic tool cards, bundle patch, plugin-index format |
 
-The projects above are not all DSH plugins. MLflow is the actual tracking backend; Optuna, DVC and RD-Agent are explicitly references/future extensions. No performance claim is inferred from their popularity.
+The projects above are not all DSH plugins. MLflow is the actual tracking backend and Optuna is the tuning engine. DVC and RD-Agent remain references/future extensions. No performance claim is inferred from their popularity.
 
 Implementation mapping:
 

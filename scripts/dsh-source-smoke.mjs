@@ -23,11 +23,11 @@ try {
   const plugin = ctx.plugin(Plugin, Plugin.Config({ root, pythonExecutable: process.env.MLWB_PYTHON ?? resolve('.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python') }))
   await plugin
   const names = ctx.tools.schemas().map(tool => tool.name)
-  assert.equal(names.filter(name => name.startsWith('ml_')).length, 9)
+  assert.equal(names.filter(name => name.startsWith('ml_')).length, 16)
   const result = await ctx.tools.execute({ calls: [{ type: 'tool-call', id: 'mlwb-smoke', name: 'ml_workbench_health', arguments: '{}' }], signal: new AbortController().signal })
   assert.equal(result.results[0].result.isError, false, JSON.stringify(result))
   assert.equal(result.results[0].result.value.protocol_version, 1)
   await plugin.dispose()
   assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('ml_')).length, 0)
-  console.log(JSON.stringify({ dsh_tools: 'passed', tool_count: 9, protocol_version: 1, unload: 'passed' }))
+  console.log(JSON.stringify({ dsh_tools: 'passed', tool_count: 16, protocol_version: 1, unload: 'passed' }))
 } finally { await ctx.fiber.dispose() }

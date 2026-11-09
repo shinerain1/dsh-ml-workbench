@@ -15,7 +15,8 @@ def main():
     args = parser.parse_args()
     interpreter = args.python.resolve()
     root = Path(__file__).resolve().parents[1]
-    with tarfile.open(root / "dist" / "dsh-ml-workbench-0.1.0.tgz") as archive:
+    version = json.loads((root / "package.json").read_text(encoding="utf-8"))["version"]
+    with tarfile.open(root / "dist" / f"dsh-ml-workbench-{version}.tgz") as archive:
         names = archive.getnames()
     assert "package/lib/index.js" in names and "package/cordis.patch.yml" in names
     assert not any("__pycache__" in name or ".egg-info" in name or ".verification" in name for name in names)

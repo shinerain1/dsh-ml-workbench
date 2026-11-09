@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 import os
 import shutil
 import subprocess
@@ -11,15 +10,17 @@ import time
 import uuid
 import zipfile
 from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.request import url2pathname
 
 import numpy as np
 import pandas as pd
 import psutil
 from mlflow import MlflowClient
-from sklearn.model_selection import train_test_split
 from sklearn.utils.multiclass import type_of_target
 
 from . import __version__
+from .datasets import MAX_DATASET_BYTES, inspect_csv, make_split, read_csv
 from .files import (
     atomic_json,
     canonical,
@@ -34,9 +35,9 @@ from .files import (
 from .spec import ExperimentSpec, WorkbenchError
 from .store import TERMINAL, Store
 
-MAX_DATASET_BYTES = 128 * 1024 * 1024
 STARTUP_GRACE_SECONDS = 30
 METRICS = {"accuracy": "max", "balanced_accuracy": "max", "f1_macro": "max",
+           "roc_auc": "max", "average_precision": "max", "log_loss": "min",
            "rmse": "min", "mae": "min", "r2": "max"}
 
 
@@ -75,11 +76,12 @@ class Workbench:
         record["state"] = state
         if error is not None:
             record["error"] = error
-        self.store.save(record)
         self.client.set_tag(record["run_id"], "mlwb.state", state)
         if state in TERMINAL:
             status = "FINISHED" if state == "succeeded" else "KILLED" if state == "cancelled" else "FAILED"
             self.client.set_terminated(record["run_id"], status)
+        # Never persist a successful lifecycle claim before MLflow has committed it.
+        self.store.save(record)
         return record
 
     def _validate_inputs(self, record: dict) -> dict:
@@ -105,6 +107,16 @@ class Workbench:
             tracked.data.metrics.get(key) != value for key, value in result["metrics"].items()
         ):
             raise WorkbenchError("TRACKING_MISMATCH", "MLflow status or metrics disagree with the recorded model output")
+        # The runs:/ model URI must serve the same files as an exported local model.
+        artifact_uri = urlsplit(tracked.info.artifact_uri)
+        if artifact_uri.scheme != "file" or artifact_uri.netloc not in {"", "localhost"} or artifact_uri.query or artifact_uri.fragment:
+            raise WorkbenchError("TRACKING_MISMATCH", "This local backend requires its original local MLflow artifact store")
+        artifact_root = Path(url2pathname(artifact_uri.path)).resolve()
+        if not artifact_root.is_relative_to((self.root / "mlflow-artifacts").resolve()):
+            raise WorkbenchError("TRACKING_MISMATCH", "MLflow artifact location moved outside this workbench root")
+        verify_tree(artifact_root / "output", checksums)
+        manifest = read_json(folder / "manifest.json")
+        verify_tree(artifact_root / "inputs", manifest["files"])
         return result
 
     def create(self, spec: ExperimentSpec, request_key: str | None = None, *, parent: dict | None = None,
@@ -128,17 +140,13 @@ class Workbench:
                 shutil.copyfile(source, inputs / "dataset.csv")
                 if (inputs / "dataset.csv").stat().st_size > MAX_DATASET_BYTES:
                     raise WorkbenchError("INVALID_DATASET", "Dataset exceeded 128 MiB while copying")
-                with (inputs / "dataset.csv").open(encoding="utf-8-sig", newline="") as stream:
-                    header = next(csv.reader(stream), [])
-                if not header or len(set(header)) != len(header) or any(not value for value in header):
-                    raise WorkbenchError("INVALID_DATASET", "CSV header must contain unique, nonempty column names")
-                frame = pd.read_csv(inputs / "dataset.csv", low_memory=False)
+                frame = read_csv(inputs / "dataset.csv")
                 if spec.target not in frame or len(frame) < 10:
                     raise WorkbenchError("INVALID_DATASET", "Target must exist and the CSV must contain at least 10 rows")
                 if frame[spec.target].isna().any():
                     raise WorkbenchError("INVALID_TARGET", "Target contains missing values; clean labels explicitly")
                 missing = set(spec.preprocessing.drop_columns) - set(frame.columns)
-                if missing or len(set(frame.columns) - {spec.target, *spec.preprocessing.drop_columns}) == 0:
+                if missing or len(set(frame.columns) - {spec.target, spec.split.column, *spec.preprocessing.drop_columns}) == 0:
                     raise WorkbenchError("INVALID_FEATURES", "Unknown drop column or no feature columns remain")
                 numeric = frame.select_dtypes(include=[np.number])
                 if np.isinf(numeric.to_numpy()).any():
@@ -149,18 +157,18 @@ class Workbench:
                         raise WorkbenchError("INVALID_TARGET", "Classification requires at least two discrete classes")
                 elif not pd.api.types.is_numeric_dtype(labels):
                     raise WorkbenchError("INVALID_TARGET", "Regression requires a numeric target")
-                train, test = train_test_split(np.arange(len(frame)), test_size=spec.test_fraction,
-                                              random_state=spec.seed,
-                                              stratify=labels if spec.task == "classification" else None)
-                if len(test) < 2:
-                    raise WorkbenchError("INVALID_SPLIT", "Validation set must contain at least two rows")
-                split = {"train": train.tolist(), "test": test.tolist()}
+                split, split_details = make_split(frame, spec)
                 atomic_json(inputs / "split.json", split)
                 dataset_hash = sha256(inputs / "dataset.csv")
-                atomic_json(inputs / "dataset.json", {"sha256": dataset_hash, "rows": len(frame),
-                                                     "columns": frame.columns.tolist(), "parser": "pandas-csv-v1"})
                 portable = spec.model_dump()
                 portable["dataset_path"] = "dataset.csv"
+                if spec.split.column is not None:
+                    portable["preprocessing"]["drop_columns"] = sorted(set(
+                        [*spec.preprocessing.drop_columns, spec.split.column]))
+                features = [name for name in frame if name not in {spec.target, *portable["preprocessing"]["drop_columns"]}]
+                atomic_json(inputs / "dataset.json", {"sha256": dataset_hash, "rows": len(frame),
+                    "columns": frame.columns.tolist(), "parser": "pandas-csv-v1", "split": split_details,
+                    "feature_schema": {name: "numeric" if pd.api.types.is_numeric_dtype(frame[name]) else "categorical" for name in features}})
                 for field, filename in [("preprocessor_path", "preprocessor.py"), ("estimator_path", "estimator.py")]:
                     path = getattr(spec, field)
                     if path is not None:
@@ -174,9 +182,22 @@ class Workbench:
                 atomic_json(inputs / "environment.json", env)
                 (inputs / "requirements.txt").write_text(requirements(), encoding="utf-8")
                 shutil.copyfile(Path(__file__).with_name("engine.py"), inputs / "engine.py")
+                parent_contract = None
+                if reuse_preprocessing and parent is not None:
+                    parent_inputs = self.run_dir(parent["run_id"]) / "inputs"
+                    if read_json(parent_inputs / "environment.json")["packages"] != env["packages"]:
+                        raise WorkbenchError("PREPROCESSING_MISMATCH", "Fitted preprocessing requires identical package versions")
+                    shutil.copyfile(parent_inputs / "engine.py", inputs / "engine.py")
+                    parent_contract = self._validate_inputs(parent)["contract"]
                 contract = {"dataset_sha256": dataset_hash, "split_sha256": digest(split),
-                            "target": spec.target, "task": spec.task, "evaluator": "holdout-v1",
-                            "metric_library": env["packages"]["scikit-learn"], "parser": "pandas-csv-v1"}
+                            "target": spec.target, "task": spec.task, "evaluator": "holdout-v2",
+                            "metric_library": env["packages"]["scikit-learn"], "parser": "pandas-csv-v1",
+                            "pandas": env["packages"]["pandas"], "numpy": env["packages"]["numpy"],
+                            "recipe_sha256": sha256(inputs / "engine.py")}
+                if parent_contract is not None:
+                    # Keep legacy evaluator identity when reusing a legacy fitted pipeline.
+                    contract = {**parent_contract, **{key: contract[key] for key in
+                        ("dataset_sha256", "split_sha256", "target", "task", "metric_library", "parser")}}
                 preprocessor_hash = digest({"config": portable["preprocessing"],
                     "source": sha256(inputs / "preprocessor.py") if has_custom and spec.preprocessor_path else None,
                     "recipe": sha256(inputs / "engine.py")})
@@ -278,11 +299,17 @@ class Workbench:
                     record["log_tail"] = stream.read().decode("utf-8", errors="replace")
             return record
 
-    def list(self, limit: int = 20) -> dict:
+    def list(self, limit: int = 20, offset: int = 0, state: str | None = None,
+             model: str | None = None, parent_run_id: str | None = None) -> dict:
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
             raise WorkbenchError("INVALID_LIMIT", "limit must be between 1 and 100")
         with self.store.lock:
-            return {"runs": [self._get_locked(run_id) for run_id in self.store.list_ids(limit)]}
+            # Reconcile active records before applying state filters.
+            for run_id in self.store.active_ids():
+                self._get_locked(run_id)
+            ids = self.store.list_ids(limit + 1, offset, state, model, parent_run_id)
+            return {"runs": [self._get_locked(run_id) for run_id in ids[:limit]],
+                    "next_offset": offset + limit if len(ids) > limit else None}
 
     def cancel(self, run_id: str) -> dict:
         with self.store.lock:
@@ -346,7 +373,8 @@ class Workbench:
             results = [self._validate_outputs(record) for record in records]
             if len({record["comparison_key"] for record in records}) != 1:
                 contracts = [read_json(self.run_dir(r["run_id"]) / "manifest.json")["contract"] for r in records]
-                differing = [key for key in contracts[0] if len({canonical(c[key]) for c in contracts}) > 1]
+                keys = set().union(*(contract.keys() for contract in contracts))
+                differing = [key for key in sorted(keys) if len({canonical(c.get(key)) for c in contracts}) > 1]
                 raise WorkbenchError("INCOMPARABLE_EXPERIMENTS", "Evaluation conditions differ: " + ", ".join(differing))
             metric = metric or ("accuracy" if records[0]["task"] == "classification" else "rmse")
             if metric not in METRICS or any(metric not in result["metrics"] for result in results):
@@ -382,6 +410,9 @@ class Workbench:
                           "Run python reproduce.py to retrain; pass --data ORIGINAL.csv if data is excluded.",
                           "Only load models and execute factories from a trusted export.", ""]
                 (staging / "REPORT.md").write_text("\n".join(report), encoding="utf-8")
+                from .reporting import html_report
+                (staging / "REPORT.html").write_text(html_report(record, result,
+                    read_json(folder / "inputs" / "dataset.json")), encoding="utf-8")
                 atomic_json(staging / "checksums.json", tree_hashes(staging))
                 exports = self.root / "exports"
                 exports.mkdir(exist_ok=True)
@@ -397,3 +428,46 @@ class Workbench:
                         "reproduce": "python reproduce.py" + ("" if include_data else " --data ORIGINAL.csv")}
             finally:
                 shutil.rmtree(staging)
+
+    def inspect(self, dataset_path: str, target: str | None = None) -> dict:
+        return inspect_csv(dataset_path, target)
+
+    def diff(self, left_run_id: str, right_run_id: str) -> dict:
+        with self.store.lock:
+            records = [self._get_locked(run_id) for run_id in (left_run_id, right_run_id)]
+            manifests = [self._validate_inputs(record) for record in records]
+            configs = [read_json(self.run_dir(record["run_id"]) / "inputs" / "config.json") for record in records]
+            def differences(left, right):
+                return {key: {"left": left.get(key), "right": right.get(key)}
+                        for key in sorted(left.keys() | right.keys()) if left.get(key) != right.get(key)}
+            return {"left_run_id": left_run_id, "right_run_id": right_run_id,
+                    "same_evaluation": records[0]["comparison_key"] == records[1]["comparison_key"],
+                    "config_changes": differences(*configs),
+                    "evaluation_changes": differences(*(m["contract"] for m in manifests)),
+                    "code_changed": [name for name in sorted(manifests[0]["files"].keys() | manifests[1]["files"].keys())
+                                     if name.endswith(".py") and manifests[0]["files"].get(name) != manifests[1]["files"].get(name)]}
+
+    def predict(self, run_id: str, dataset_path: str) -> dict:
+        from .inference import predict_csv
+        with self.store.lock:
+            record = self._get_locked(run_id)
+            self._validate_outputs(record)
+            if record["custom_code"] and not self.allow_custom_code:
+                raise WorkbenchError("CUSTOM_CODE_DISABLED", "Enable allowCustomCode to load this custom model")
+            return predict_csv(self, record, dataset_path)
+
+    def search_create(self, **kwargs) -> dict:
+        from .tuning import Tuning
+        return Tuning(self).create(**kwargs)
+
+    def search_step(self, study_name: str) -> dict:
+        from .tuning import Tuning
+        return Tuning(self).step(study_name)
+
+    def search_get(self, study_name: str) -> dict:
+        from .tuning import Tuning
+        return Tuning(self).get(study_name)
+
+    def search_cancel(self, study_name: str) -> dict:
+        from .tuning import Tuning
+        return Tuning(self).cancel(study_name)

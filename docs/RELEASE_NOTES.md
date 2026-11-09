@@ -1,14 +1,14 @@
-# 0.1.0 — MLflow workflows adapted for DSH
+# 0.2.0 — Durable Optuna tuning and stronger experiment workflows
 
 DSH ML Workbench binds each local CSV experiment to its data, code, parameters, validation rows, MLflow record and fitted pipeline. A follow-up can reuse a prior experiment's exact fitted preprocessing while changing its estimator, without overwriting the original run. Incompatible evaluations and mismatched deliveries are rejected.
 
-Nine DSH tools cover health, create, start, get, list, cancel, branch, compare and export. Python workers persist independently of the DSH turn, expose durable state and confirm cancellation. Exports contain a model, recipe, report, pinned dependencies and standalone reproduction; data is excluded by default.
+Sixteen DSH tools add dataset inspection, experiment diffs, batch prediction and durable Optuna search to the original experiment lifecycle. Group-disjoint and chronological holdouts, probability metrics, dummy baselines and confusion matrices improve evaluation. Deliveries now include an escaped portable HTML report.
 
-MLflow 3.18.0 and scikit-learn supply tracking, pipelines, training algorithms, metrics and model serialization. Optuna, DVC and RD-Agent were reviewed but are not runtime integrations in this release.
+MLflow 3.18.0, Optuna 5.0.0 and scikit-learn provide the underlying tracking, sampling, training and serialization. Optuna studies persist in SQLite with a linked MLflow run per trial. Repeated step calls do not duplicate active fits; lost controller responses are reconciled through persisted request keys. DVC and RD-Agent remain references rather than runtime integrations.
 
-Validation: 13 Python cases and 3 Node cases; actual DSH tool executor and plugin-manager installation; seven real synthetic-data runs; two exported models independently retrained with matching metrics. See [validation evidence](https://github.com/shinerain1/dsh-ml-workbench/blob/main/docs/VALIDATION.md) for exact scope and clean-environment results.
+Validation covers the expanded Python regression/failure-injection suite, three Node tests, the actual 16-tool DSH executor, grouped/time synthetic fits, three Optuna trials, batch prediction, legacy v0.1 upgrade and independent delivery reproduction. See [v0.2 validation evidence](https://github.com/shinerain1/dsh-ml-workbench/blob/main/docs/VALIDATION-v0.2.md) and its machine-readable results.
 
-An online DSH account-provider call returned ACCOUNT_SIGN_IN_REQUIRED before inference. Human intervention reduction and native-versus-plugin agent gains remain unmeasured. The release targets local single-user CSV classification/regression, not time-series or grouped evaluation, multi-tenant service, automatic tuning, or mid-training checkpoint resume.
+An online DSH account-provider call still returns ACCOUNT_SIGN_IN_REQUIRED before inference. Agent-productivity gains remain unmeasured. This remains a local single-user CSV workflow: Optuna requires step calls to advance and enforces timeout on polling; parallel tuning, pruning, nested CV, GPU training, remote serving and optimizer checkpoint continuation are not implemented. It is not feature-equivalent to the full upstream platforms.
 
 Install the Python wheel with the supplied requirements.lock, then the DSH `.tgz`, or add this third-party index to DSH Discover:
 

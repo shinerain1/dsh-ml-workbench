@@ -70,9 +70,22 @@ class Store:
             raise WorkbenchError("IDEMPOTENCY_CONFLICT", "request_key was already used with different arguments")
         return self.get(row[1])
 
-    def list_ids(self, limit: int) -> list[str]:
+    def list_ids(self, limit: int, offset: int = 0, state: str | None = None,
+                 model: str | None = None, parent_run_id: str | None = None) -> list[str]:
+        clauses, values = [], []
+        for field, value in [("state", state), ("model", model), ("parent_run_id", parent_run_id)]:
+            if value is not None:
+                clauses.append(f"json_extract(record, '$.{field}') = ?")
+                values.append(value)
+        where = " WHERE " + " AND ".join(clauses) if clauses else ""
         with self.connect() as db:
-            return [row[0] for row in db.execute("SELECT id FROM runs ORDER BY rowid DESC LIMIT ?", (limit,))]
+            return [row[0] for row in db.execute("SELECT id FROM runs" + where + " ORDER BY rowid DESC LIMIT ? OFFSET ?",
+                                                [*values, limit, offset])]
+
+    def active_ids(self) -> list[str]:
+        with self.connect() as db:
+            return [row[0] for row in db.execute("SELECT id FROM runs WHERE json_extract(record, '$.state') "
+                                                "IN ('starting', 'running', 'cancelling')")]
 
     def events(self, run_id: str) -> list[dict]:
         with self.connect() as db:

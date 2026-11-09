@@ -17,29 +17,40 @@ def dispatch(workbench, request):
         BranchRequest,
         CompareRequest,
         CreateRequest,
+        DiffRequest,
         ExperimentSpec,
         ExportRequest,
+        InspectRequest,
         ListRequest,
+        PredictRequest,
         RunRequest,
+        SearchCreateRequest,
+        SearchRequest,
         WorkbenchError,
     )
 
     args = dict(request.args)
     operation = request.operation
     if operation == "health":
+        from importlib.metadata import version
+
         from . import __version__
         from .files import environment
         if args:
             raise WorkbenchError("INVALID_ARGUMENTS", "health takes no arguments")
         return {"version": __version__, "protocol_version": 1, "tracking_uri": workbench.tracking_uri,
                 "root": str(workbench.root), "allow_custom_code": workbench.allow_custom_code,
-                "environment": environment()}
+                "environment": environment(), "optuna_version": version("optuna"),
+                "features": ["random/group/time splits", "Optuna ask/tell", "batch prediction", "experiment diff", "HTML export"]}
     if operation == "create":
         args = CreateRequest.model_validate(args).model_dump()
         request_key = args.pop("request_key", None)
         return workbench.create(ExperimentSpec.model_validate(args), request_key)
     schemas = {"start": RunRequest, "get": RunRequest, "list": ListRequest, "cancel": RunRequest,
-               "branch": BranchRequest, "compare": CompareRequest, "export": ExportRequest}
+               "branch": BranchRequest, "compare": CompareRequest, "export": ExportRequest,
+               "inspect": InspectRequest, "diff": DiffRequest, "predict": PredictRequest,
+               "search_create": SearchCreateRequest, "search_step": SearchRequest,
+               "search_get": SearchRequest, "search_cancel": SearchRequest}
     validated = schemas[operation].model_validate(args).model_dump()
     return getattr(workbench, operation)(**validated)
 

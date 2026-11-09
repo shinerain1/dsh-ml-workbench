@@ -1,21 +1,21 @@
 # DSH ML Workbench
 
-[中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION.md) · [Upstream reuse](docs/UPSTREAM.md)
+[中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION-v0.2.md) · [Upstream reuse](docs/UPSTREAM.md)
 
-A DeepSeek Harness plugin adapting **MLflow and scikit-learn** into an agent-accessible experiment workflow. It supports local CSV classification and regression: create, start, inspect, cancel, branch, compare and export. Training algorithms, pipelines, model serialization and experiment tracking come from established libraries.
+A DeepSeek Harness plugin adapting **MLflow, Optuna and scikit-learn** into an agent-accessible experiment workflow. Version 0.2.0 provides 16 tools for CSV inspection, experiments, durable tuning, comparisons, prediction and reproducible delivery. Training algorithms, sampling, model serialization and tracking come from established libraries. See the candid [capability review](docs/MATURITY.md) for the remaining gap to full upstream platforms.
 
 Ask DSH to train several repurchase classifiers, then say: “Keep the third experiment's fitted preprocessing, try a faster model, and compare.” The branch gets a new MLflow run, copies the exact fitted transformer, retains the same validation rows and leaves the parent untouched.
 
 ## Install
 
-Requires Python 3.11+ (tested on 3.12.0), Node 24.9+, and DSH 0.2.2 (tested against `0.2.2-alpha.3`). Version 0.1.0 is a local, single-user backend. Install the Python backend separately from the DSH bundle.
+Requires Python 3.11+ (the lock file was tested on 3.12.0), Node 24.9+, and DSH 0.2.2 (tested against `0.2.2-alpha.3`). This is a local, single-user backend. Install the Python backend separately from the DSH bundle.
 
 Download the Python wheel, `requirements.lock` and plugin `.tgz` from [Releases](https://github.com/shinerain1/dsh-ml-workbench/releases). Initialize DSH Desktop once, then fully quit it before installing into its profile. On Windows, from a dedicated folder:
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.1.0-py3-none-any.whl
-dsh plugin --profile desktop add .\dsh-ml-workbench-0.1.0.tgz
+.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.2.0-py3-none-any.whl
+dsh plugin --profile desktop add .\dsh-ml-workbench-0.2.0.tgz
 ```
 
 Alternatively enable **Custom plugin index** in DSH's experimental plugins, open **Discover**, and add:
@@ -40,12 +40,14 @@ Call `ml_workbench_health` first. Use the same `root` after restarting DSH to re
 
 ## Workflow
 
-1. `ml_experiment_create` snapshots CSV, code, parameters, environment and validation indices. A `request_key` makes retries of this creation idempotent.
+1. `ml_dataset_inspect` reports missing values, types, duplicates and possible identifiers. `ml_experiment_create` then snapshots CSV, code, parameters, environment and validation indices. A `request_key` makes creation retries idempotent.
 2. `ml_experiment_start` starts one detached worker. Poll `ml_experiment_get`; the control call returns before training completes. Closing DSH does not cancel the worker.
 3. `ml_experiment_list` restores run IDs after a session restart. A dead worker is reported as `interrupted`, never successful.
 4. `ml_experiment_branch` creates a new experiment. By default it reuses a successful parent's exact fitted preprocessing. Set `reuse_preprocessing: false` to change processing or restart a failed fit.
-5. `ml_experiment_compare` refuses different data, targets, splits or evaluator contracts. Supported metrics are accuracy/balanced accuracy/macro-F1 and RMSE/MAE/R².
-6. `ml_experiment_export` verifies snapshots and MLflow metrics before delivering a local ZIP. It includes model, code, report, environment and standalone reproduction; CSV is omitted unless `include_data: true`.
+5. `ml_experiment_diff` explains configuration, code and evaluator changes. `ml_experiment_compare` refuses incompatible conditions. Classification adds ROC-AUC, average precision and log loss when defined; reports include a dummy baseline and confusion matrix.
+6. `ml_search_create/step/get/cancel` adapt persistent Optuna tuning. Each step starts at most one asynchronous trial; repeating calls is safe, and the same study resumes after a DSH restart. [Search contract](docs/TUNING.md).
+7. `ml_model_predict` applies a verified model to another local CSV, checks required features and writes predictions/probabilities plus a manifest.
+8. `ml_experiment_export` verifies snapshots and MLflow metrics before delivering a ZIP with model, code, HTML/Markdown report, environment and standalone reproduction. CSV is omitted unless `include_data: true`.
 
 Example creation arguments:
 
@@ -60,6 +62,10 @@ Example branch arguments:
 ```
 
 `changes` replaces specified top-level fields, including the whole `params` object. No run ID is reused for a changed experiment. Branching is restart-from-data, not optimizer checkpoint continuation.
+
+Choose evaluation boundaries explicitly. `split: {"strategy":"group","column":"customer_id"}` keeps a customer entirely on one side; `split: {"strategy":"time","column":"event_date"}` puts later ISO timestamps in validation without splitting equal timestamps. The split column is automatically excluded from features. Time mode does not implement a forecasting pipeline or an embargo gap; grouped holdout does not guarantee class balance.
+
+When upgrading from 0.1.0, keep the same root. Old records remain readable/exportable. A fitted-preprocessing branch retains the parent's snapshotted recipe and evaluator; cross-version evaluators are not silently ranked together. To use new metrics or tuning, create a branch with `reuse_preprocessing:false` to refit using the current recipe.
 
 ## Delivery and MLflow
 
@@ -85,7 +91,7 @@ Do not edit tracked metrics or snapshot files: consistency validation will rejec
 
 DSH can author a scikit-learn transformer factory (`examples/preprocessor.py`) or estimator factory (`examples/estimator.py`). Enable `allowCustomCode` only for reviewed local Python. The plugin runs on the DSH host using Node subprocesses; it does **not** run inside DSH's SSH/process sandbox. Factories execute with the user's permissions and models use Python serialization; load only trusted artifacts. A root is for one local user, not an untrusted multi-tenant server.
 
-The first release uses an IID holdout (stratified for classification). It does not implement time/group-aware splitting, forecasting, GPU training, automatic feature-leakage detection, Optuna tuning, DVC storage or RD-Agent orchestration. Remove identifiers and post-outcome columns explicitly. Repeated selection on one holdout can overfit; evaluate the final chosen approach on independently held-out data. Local synthetic results do not establish customer prediction quality or improved agent productivity.
+The default is an IID holdout, with explicit group/time alternatives. Forecasting, GPU training, nested cross-validation, automatic leakage detection, DVC storage, model serving and RD-Agent orchestration are not implemented. Optuna runs sequentially; DSH must poll step to advance, and timeout is enforced on polling, not by a background daemon. Remove identifiers and post-outcome columns explicitly. Repeated model selection can overfit the holdout; evaluate the final chosen approach independently. Local synthetic results do not establish business value or improved agent productivity.
 
 ## Development and evidence
 
@@ -97,6 +103,7 @@ npm ci --ignore-scripts
 npm run check
 .\.venv\Scripts\python.exe -m pytest tests -q
 .\.venv\Scripts\python.exe scripts/demo.py --root .verification/new-demo --report docs/validation-results.json
+.\.venv\Scripts\python.exe scripts/demo-v2.py --root .verification/new-demo-v2 --report docs/v2-results.json
 ```
 
-Use a new demo root each time. [Validation](docs/VALIDATION.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.
+Use a new demo root each time. [Validation](docs/VALIDATION-v0.2.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.

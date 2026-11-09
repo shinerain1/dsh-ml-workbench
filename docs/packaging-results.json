@@ -1,34 +1,40 @@
 {
   "wheel_install": "passed",
-  "backend_version": "0.1.0",
+  "backend_version": "0.2.0",
   "npm_content_check": "passed",
   "clean_environment_deliveries": [
     {
       "verified_files": 20,
       "metrics_match": true,
       "recorded": {
-        "accuracy": 0.7,
-        "balanced_accuracy": 0.7,
-        "f1_macro": 0.7
+        "accuracy": 0.8611111111111112,
+        "balanced_accuracy": 0.8666666666666667,
+        "f1_macro": 0.859375,
+        "log_loss": 0.30983416301076944,
+        "roc_auc": 0.9551587301587301,
+        "average_precision": 0.9607240733727828
       },
       "reproduced": {
-        "accuracy": 0.7,
-        "balanced_accuracy": 0.7,
-        "f1_macro": 0.7
+        "accuracy": 0.8611111111111112,
+        "balanced_accuracy": 0.8666666666666667,
+        "f1_macro": 0.859375,
+        "log_loss": 0.30983416301076944,
+        "roc_auc": 0.9551587301587301,
+        "average_precision": 0.9607240733727828
       }
     },
     {
-      "verified_files": 18,
+      "verified_files": 19,
       "metrics_match": true,
       "recorded": {
-        "rmse": 5.5707443321777905,
-        "mae": 4.462410353451441,
-        "r2": 0.9982873181311712
+        "rmse": 3.722586742359212,
+        "mae": 3.094591513293039,
+        "r2": 0.9980295466188763
       },
       "reproduced": {
-        "rmse": 5.5707443321777905,
-        "mae": 4.462410353451441,
-        "r2": 0.9982873181311712
+        "rmse": 3.722586742359212,
+        "mae": 3.094591513293039,
+        "r2": 0.9980295466188763
       }
     }
   ]

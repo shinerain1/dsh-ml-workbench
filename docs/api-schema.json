@@ -20,7 +20,14 @@
             "cancel",
             "branch",
             "compare",
-            "export"
+            "export",
+            "inspect",
+            "diff",
+            "predict",
+            "search_create",
+            "search_step",
+            "search_get",
+            "search_cancel"
           ],
           "title": "Operation",
           "type": "string"
@@ -73,6 +80,35 @@
             }
           },
           "title": "Preprocessing",
+          "type": "object"
+        },
+        "SplitSpec": {
+          "additionalProperties": false,
+          "properties": {
+            "strategy": {
+              "default": "random",
+              "enum": [
+                "random",
+                "group",
+                "time"
+              ],
+              "title": "Strategy",
+              "type": "string"
+            },
+            "column": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Column"
+            }
+          },
+          "title": "SplitSpec",
           "type": "object"
         }
       },
@@ -136,6 +172,9 @@
           "exclusiveMinimum": 0.0,
           "title": "Test Fraction",
           "type": "number"
+        },
+        "split": {
+          "$ref": "#/$defs/SplitSpec"
         },
         "preprocessor_path": {
           "anyOf": [
@@ -235,6 +274,58 @@
           "minimum": 1,
           "title": "Limit",
           "type": "integer"
+        },
+        "offset": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "enum": [
+                "created",
+                "starting",
+                "running",
+                "cancelling",
+                "succeeded",
+                "failed",
+                "interrupted",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "State"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "parent_run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Run Id"
         }
       },
       "title": "ListRequest",
@@ -326,6 +417,285 @@
         "run_id"
       ],
       "title": "ExportRequest",
+      "type": "object"
+    },
+    "inspect": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_path": {
+          "title": "Dataset Path",
+          "type": "string"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        }
+      },
+      "required": [
+        "dataset_path"
+      ],
+      "title": "InspectRequest",
+      "type": "object"
+    },
+    "diff": {
+      "additionalProperties": false,
+      "properties": {
+        "left_run_id": {
+          "title": "Left Run Id",
+          "type": "string"
+        },
+        "right_run_id": {
+          "title": "Right Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left_run_id",
+        "right_run_id"
+      ],
+      "title": "DiffRequest",
+      "type": "object"
+    },
+    "predict": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "dataset_path": {
+          "title": "Dataset Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "dataset_path"
+      ],
+      "title": "PredictRequest",
+      "type": "object"
+    },
+    "search_create": {
+      "$defs": {
+        "SearchSpace": {
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "enum": [
+                "int",
+                "float",
+                "categorical"
+              ],
+              "title": "Type",
+              "type": "string"
+            },
+            "low": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Low"
+            },
+            "high": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "High"
+            },
+            "step": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Step"
+            },
+            "log": {
+              "default": false,
+              "title": "Log",
+              "type": "boolean"
+            },
+            "choices": {
+              "anyOf": [
+                {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Choices"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "title": "SearchSpace",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "study_name": {
+          "pattern": "^[A-Za-z0-9_.-]{1,80}$",
+          "title": "Study Name",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "search_space": {
+          "additionalProperties": {
+            "$ref": "#/$defs/SearchSpace"
+          },
+          "maxProperties": 20,
+          "minProperties": 1,
+          "title": "Search Space",
+          "type": "object"
+        },
+        "n_trials": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "N Trials",
+          "type": "integer"
+        },
+        "metric": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Metric"
+        },
+        "seed": {
+          "default": 42,
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "reuse_preprocessing": {
+          "default": false,
+          "title": "Reuse Preprocessing",
+          "type": "boolean"
+        },
+        "trial_timeout_seconds": {
+          "default": 600,
+          "maximum": 86400,
+          "minimum": 5,
+          "title": "Trial Timeout Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "study_name",
+        "run_id",
+        "search_space"
+      ],
+      "title": "SearchCreateRequest",
+      "type": "object"
+    },
+    "search_step": {
+      "additionalProperties": false,
+      "properties": {
+        "study_name": {
+          "pattern": "^[A-Za-z0-9_.-]{1,80}$",
+          "title": "Study Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "study_name"
+      ],
+      "title": "SearchRequest",
+      "type": "object"
+    },
+    "search_get": {
+      "additionalProperties": false,
+      "properties": {
+        "study_name": {
+          "pattern": "^[A-Za-z0-9_.-]{1,80}$",
+          "title": "Study Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "study_name"
+      ],
+      "title": "SearchRequest",
+      "type": "object"
+    },
+    "search_cancel": {
+      "additionalProperties": false,
+      "properties": {
+        "study_name": {
+          "pattern": "^[A-Za-z0-9_.-]{1,80}$",
+          "title": "Study Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "study_name"
+      ],
+      "title": "SearchRequest",
       "type": "object"
     },
     "health": {

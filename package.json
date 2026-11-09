@@ -1,6 +1,6 @@
 {
   "name": "dsh-ml-workbench",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MLflow experiment workflows for DSH: track, branch, compare and reproduce local CSV models",
   "type": "module",
   "main": "./lib/index.js",

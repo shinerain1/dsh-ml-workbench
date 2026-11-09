@@ -7,6 +7,11 @@ if (!/^[a-f0-9]{40}$/.test(commit ?? '')) throw new Error('Supply the released 4
 const root = resolve(import.meta.dirname, '..')
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
 const icon = (await readFile(join(root, 'icon.svg'))).toString('base64')
+let earlier = []
+try {
+  const previous = JSON.parse(await readFile(join(root, 'market', 'index.json'), 'utf8'))
+  earlier = previous.plugins.find(plugin => plugin.name === pkg.name)?.versions.filter(v => v.version !== pkg.version) ?? []
+} catch (error) { if (error.code !== 'ENOENT') throw error }
 const index = {
   format: 1,
   title: { en: 'DSH ML Workbench', zh: 'DSH 机器学习实验工作台' },
@@ -23,7 +28,7 @@ const index = {
     metadata: { keywords: ['MLflow', 'CSV', 'classification', 'regression', 'experiments', '机器学习'] },
     versions: [{ version: pkg.version, publishTimestamp: Math.floor(Date.now() / 1000),
       engines: { dsh: pkg.engines.dsh },
-      source: { type: 'git', url: 'https://github.com/shinerain1/dsh-ml-workbench', commit } }],
+      source: { type: 'git', url: 'https://github.com/shinerain1/dsh-ml-workbench', commit } }, ...earlier],
   }],
 }
 await mkdir(join(root, 'market'), { recursive: true })
