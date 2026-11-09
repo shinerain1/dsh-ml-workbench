@@ -16,6 +16,8 @@ This release focuses on DSH-native behavior and evidence-driven fixes. [The comp
 
 The wheel is installed into the previously isolated release environment with unchanged locked numerical dependencies, not an editable import. Native DSH checks also run against that installed backend. Independent pilot delivery audits use the release interpreter. Historical v0.2/v0.1 reports are retained without relabeling old tests.
 
+The public v0.3.0 Git commit was installed through DSH's `plugin --profile headless add` into an isolated profile. That installed plugin registered 17 tools, executed health through the actual Native executor with the installed wheel, and unloaded cleanly. The public index returned HTTP 200, passed DSH's own index parser and retained v0.2.0/v0.1.0. All five GitHub release asset digests match local SHA-256 values in [publication-v3.json](publication-v3.json). Installation emitted peer-dependency warnings; the assembled runtime check passed.
+
 The earlier account-provider sign-in failure was avoided by using the already configured API-key provider. No credential is copied into the repository. Raw model transcripts, actual Session IDs, local databases and generated training outputs remain outside Git; reports contain aggregate measurements and sanitized results.
 
 Limits include single-user local execution, startup/poll overhead, no OS sandbox around Python, no weight checkpoint resume, no distributed scheduling/nested CV, and no established cross-platform reliability. PTC-facing schemas/example are provided, but the live pilot used Native mode and is not a PTC performance measurement.

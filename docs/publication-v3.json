@@ -1,0 +1,43 @@
+{
+  "release": "https://github.com/shinerain1/dsh-ml-workbench/releases/tag/v0.3.0",
+  "version": "v0.3.0",
+  "source_commit": "d2da785022775b0d0363538fc1a062a83bfd78f9",
+  "assets": [
+    {
+      "name": "dsh-ml-workbench-0.3.0.tgz",
+      "sha256": "792248f5046b5f93273c8728d9eb921c4d32c89c3d129c7e6d102f56498866b3",
+      "github_digest_matches": true
+    },
+    {
+      "name": "dsh_ml_workbench-0.3.0-py3-none-any.whl",
+      "sha256": "75eaf102daf8eab6b6886f94b3514241023c2f817c06fa8b92a0852f53dbe621",
+      "github_digest_matches": true
+    },
+    {
+      "name": "dsh_ml_workbench-0.3.0.tar.gz",
+      "sha256": "eeb3c48ab1076b649395ca593abc698871ff9e4f098218527aa31092f6da696f",
+      "github_digest_matches": true
+    },
+    {
+      "name": "requirements.lock",
+      "sha256": "c19fdc0cc6048b57ca8aaeeae37c6d6b97adea9f262e8ed1747ddfdea1e19370",
+      "github_digest_matches": true
+    },
+    {
+      "name": "SHA256SUMS-v0.3.0.txt",
+      "sha256": "d543cfc3bdd61e14a971906d7d385d46950f49f1896e3a22e27401372edf794a",
+      "github_digest_matches": true
+    }
+  ],
+  "public_index_http_status": 200,
+  "index_versions": [
+    "0.3.0",
+    "0.2.0",
+    "0.1.0"
+  ],
+  "dsh_public_git_install": "passed",
+  "installed_bundle_native_executor": "passed",
+  "native_tool_count": 17,
+  "backend_installed_wheel": "0.3.0",
+  "unload": "passed"
+}
