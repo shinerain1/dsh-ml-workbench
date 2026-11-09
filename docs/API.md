@@ -5,6 +5,7 @@ The public DSH tools use ordinary JSON objects; no JSON-encoded strings inside a
 | DSH tool | RPC operation | Arguments |
 |---|---|---|
 | ml_workbench_health | health | `{}` |
+| ml_workbench_resume | resume | optional `previous_session_id`, `limit=20`, `offset=0` |
 | ml_experiment_create | create | `dataset_path`, `target`, `task`; optional fields below |
 | ml_experiment_start | start | `run_id` |
 | ml_experiment_get | get | `run_id` |
@@ -23,7 +24,9 @@ The public DSH tools use ordinary JSON objects; no JSON-encoded strings inside a
 
 Create requires a UTF-8 CSV up to 128 MiB, at least 10 rows, unique nonempty headers, a known target and at least one feature. Missing labels, infinite numeric values and unsupported labels are rejected. Classification requires two or more discrete classes and a feasible stratified holdout; regression requires a numeric target.
 
-Create optional fields: `name`, `experiment_name`, `model`, `params`, `seed=42`, `test_fraction=0.2` (strictly between 0 and 0.5), `preprocessing`, `preprocessor_path`, `estimator_path`, `request_key`. Supported shared models: `random_forest`, `extra_trees`, `hist_gradient_boosting`. Classification adds `logistic_regression`; regression adds `ridge`. `custom` requires `estimator_path`. Estimator arguments are native scikit-learn parameters; `random_state` and `n_jobs` may not be overridden (use `seed`; n_jobs=1).
+Create optional fields: `name`, `experiment_name`, `model`, `params`, `seed=42`, `test_fraction=0.2` (strictly between 0 and 0.5), `preprocessing`, `preprocessor_path`, `estimator_path`, `request_key`. Supported shared models: `random_forest`, `extra_trees`, `hist_gradient_boosting`. Classification adds `logistic_regression`; regression adds `ridge`. `custom` requires `estimator_path`. Estimator arguments are native scikit-learn parameters. In v0.3 a redundant integer `params.random_state` equal to `seed` and integer `params.n_jobs=1` are accepted and removed from canonical params. Conflicting values, nulls, booleans and floats are rejected. The managed seed and one-thread policy are unchanged. Search spaces cannot tune these controls.
+
+In v0.3 the adapter supplies an optional RPC-envelope `dsh_context: {session_id, call_id}` from DSH execution identity. It is not a tool argument. Create/branch automatically deduplicate exact call replay when no explicit `request_key` is given. New calls and PTC reruns still require a stable explicit key for the same intended experiment. `resume` returns linked resources and their next tools, without training or verifying result metrics. [Complete DSH integration contract](DSH-INTEGRATION.md).
 
 v0.2 adds `split: {strategy:"random"|"group"|"time", column?:string}`. Random omits `column`; group/time require it. Group uses sklearn GroupShuffleSplit (test_fraction is a fraction of groups, not rows). Time requires nonmissing ISO strings; all timestamps at or after the boundary go to validation, so ties may increase its size. The split column is excluded from features. Training must contain all target classes; validation need not, so some probability metrics may be unavailable. Both partitions need at least two rows.
 

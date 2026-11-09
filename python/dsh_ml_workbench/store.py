@@ -27,6 +27,9 @@ class Store:
                        "run_id TEXT NOT NULL, time REAL NOT NULL, state TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS requests (key TEXT PRIMARY KEY, payload_hash TEXT NOT NULL, "
                        "run_id TEXT NOT NULL)")
+            db.execute("CREATE TABLE IF NOT EXISTS session_links (session_id TEXT NOT NULL, kind TEXT NOT NULL, "
+                       "ref TEXT NOT NULL, call_id TEXT NOT NULL, created_at REAL NOT NULL, "
+                       "PRIMARY KEY(session_id,kind,ref))")
 
     @contextmanager
     def connect(self):
@@ -56,6 +59,24 @@ class Store:
                        (record["run_id"], record["updated_at"], record["state"]))
             if request_key is not None:
                 db.execute("INSERT INTO requests VALUES (?,?,?)", (request_key, payload_hash, record["run_id"]))
+            if record.get("dsh_context"):
+                self._link(db, record["dsh_context"], "run", record["run_id"])
+
+    @staticmethod
+    def _link(db, context: dict, kind: str, ref: str) -> None:
+        db.execute("INSERT OR IGNORE INTO session_links VALUES (?,?,?,?,?)",
+                   (context["session_id"], kind, ref, context["call_id"], time.time()))
+
+    def link(self, context: dict | None, kind: str, ref: str) -> None:
+        if context is not None:
+            with self.connect() as db:
+                self._link(db, context, kind, ref)
+
+    def session_links(self, session_id: str, limit: int, offset: int) -> list[dict]:
+        with self.connect() as db:
+            return [{"kind": row[0], "ref": row[1], "call_id": row[2]} for row in db.execute(
+                "SELECT kind,ref,call_id FROM session_links WHERE session_id=? "
+                "ORDER BY created_at DESC,kind,ref LIMIT ? OFFSET ?", (session_id, limit, offset))]
 
     def previous_request(self, key: str | None, payload_hash: str) -> dict | None:
         if key is None:

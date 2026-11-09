@@ -1,0 +1,7 @@
+{
+  "observed_failed_calls": 2,
+  "exact_payload_replays_succeeded_after_fix": 2,
+  "existing_run_ids_preserved": true,
+  "total_runs_after_replays": 3,
+  "new_model_calls": 0
+}

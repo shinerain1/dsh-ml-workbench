@@ -60,6 +60,8 @@ class Tuning:
                 raise WorkbenchError("INVALID_SEARCH_SPACE", "Search parameter is not supported by this estimator")
             payload = {**request.model_dump(), "metric": metric, "base_manifest_hash": record["manifest_hash"],
                        "comparison_key": record["comparison_key"]}
+            # Persist a discoverable intent before Optuna commits, even if this control call dies next.
+            self.workbench.store.link(self.workbench.dsh_context, "study", request.study_name)
             study = optuna.create_study(study_name="mlwb::" + request.study_name, storage=storage,
                                        direction="maximize" if METRICS[metric] == "max" else "minimize", load_if_exists=True)
             existing = study.user_attrs.get("mlwb.config")

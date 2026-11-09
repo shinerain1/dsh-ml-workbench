@@ -13,6 +13,7 @@ from dsh_ml_workbench.spec import (
     InspectRequest,
     ListRequest,
     PredictRequest,
+    ResumeRequest,
     RpcRequest,
     RunRequest,
     SearchCreateRequest,
@@ -22,7 +23,7 @@ from dsh_ml_workbench.spec import (
 root = Path(__file__).resolve().parents[1]
 create = CreateRequest.model_json_schema()
 schemas = {"rpc": RpcRequest.model_json_schema(), "create": create}
-for operation, model in {"start": RunRequest, "get": RunRequest, "cancel": RunRequest,
+for operation, model in {"resume": ResumeRequest, "start": RunRequest, "get": RunRequest, "cancel": RunRequest,
                          "list": ListRequest, "branch": BranchRequest, "compare": CompareRequest,
                          "export": ExportRequest, "inspect": InspectRequest, "diff": DiffRequest,
                          "predict": PredictRequest, "search_create": SearchCreateRequest,

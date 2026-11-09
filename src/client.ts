@@ -4,6 +4,9 @@ import { spawn } from 'node:child_process'
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json }
 export type JsonObject = { [key: string]: Json }
 
+/** Host-supplied DSH identity; never taken from model arguments. */
+export interface DshInvocation { session_id: string; call_id: string }
+
 export interface ClientConfig {
   pythonExecutable: string
   root: string
@@ -31,9 +34,9 @@ export class BackendClient {
   constructor(private readonly config: ClientConfig) {}
 
   /** Send one versioned request, preserving caller cancellation and byte limits. */
-  call(operation: string, args: unknown, signal: AbortSignal): Promise<JsonObject> {
+  call(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation): Promise<JsonObject> {
     const fused = AbortSignal.any([signal, this.lifetime.signal, AbortSignal.timeout(this.config.requestTimeoutMs)])
-    const tracked = this.request(operation, args, fused).finally(() => this.active.delete(tracked))
+    const tracked = this.request(operation, args, fused, dshContext).finally(() => this.active.delete(tracked))
     this.active.add(tracked)
     return tracked
   }
@@ -44,9 +47,9 @@ export class BackendClient {
     await Promise.allSettled([...this.active])
   }
 
-  private async request(operation: string, args: unknown, signal: AbortSignal): Promise<JsonObject> {
+  private async request(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation): Promise<JsonObject> {
     signal.throwIfAborted()
-    const request = JSON.stringify({ protocol_version: 1, operation, args })
+    const request = JSON.stringify({ protocol_version: 1, operation, args, dsh_context: dshContext })
     if (Buffer.byteLength(request) > 1024 * 1024) throw new Error('REQUEST_TOO_LARGE: RPC input exceeds 1 MiB')
     const argv = ['-m', 'dsh_ml_workbench', 'rpc', '--root', this.config.root]
     if (this.config.allowCustomCode) argv.push('--allow-custom-code')
@@ -59,7 +62,11 @@ export class BackendClient {
       let bytes = 0
       let stderr = Buffer.alloc(0)
       let failure: Error | undefined
-      const abort = () => { failure = new Error('REQUEST_ABORTED: control request stopped; use ml_experiment_get to reconcile any started work'); child.kill() }
+      const abort = () => {
+        const timeout = signal.reason instanceof Error && signal.reason.name === 'TimeoutError'
+        failure = new Error(`${timeout ? 'REQUEST_TIMEOUT' : 'REQUEST_ABORTED'}: control request stopped; its outcome may already be committed. Use ml_workbench_resume or ml_experiment_list to recover IDs, then ml_experiment_get. Retry creation only with the same request_key or exact DSH call identity.`)
+        child.kill()
+      }
       signal.addEventListener('abort', abort, { once: true })
       if (signal.aborted) abort()
       child.stdout.on('data', (chunk: Buffer) => {

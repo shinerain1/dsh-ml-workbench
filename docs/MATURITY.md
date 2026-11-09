@@ -1,6 +1,6 @@
 # Capability review: what this adapter does and does not replace
 
-This project is a local DSH integration of mature libraries. Version 0.2.0 is a more capable, tested experiment workflow; it is **not feature-equivalent** to all of MLflow, Optuna, DVC or RD-Agent, and no short local test can establish their level of production maturity.
+This project is a local DSH integration of mature libraries. Version 0.3.0 adds Session/call identity, recovery, typed PTC handles and a fix derived from a real Agent pilot to the v0.2 capabilities below. It is **not feature-equivalent** to all of MLflow, Optuna, DVC or RD-Agent, and no short local test can establish their level of production maturity.
 
 | Area | v0.1.0 | v0.2.0 | Remaining boundary |
 |---|---|---|---|
@@ -9,9 +9,11 @@ This project is a local DSH integration of mature libraries. Version 0.2.0 is a 
 | Hyperparameter search | Not implemented | Real Optuna 5 TPE ask/tell + SQLite persistence, fixed budget, one active trial, crash reconciliation and cancellation | DSH must keep calling step; no unattended study daemon, parallel scheduling, pruning, multi-objective search or optimizer checkpoints |
 | Data/model lineage | Immutable local CSV/code/env snapshots | Same, stricter recipe/parser/library comparison contract; legacy recipe preserved for fitted-preprocessing branches | No DVC remote, content-addressed deduplication, large-data pipeline cache or signed audit trail |
 | Delivery | Model/code/Markdown report/standalone reproduction | Adds escaped standalone HTML report and schema-checked batch prediction | No model serving service, canary deployment or GPU inference |
-| Agent evaluation | Deterministic integration and failure injection | Extended workflow and upgrade tests | Online DSH natural-language control trial, human-intervention reduction and business gains remain unmeasured |
+| Agent evaluation | Deterministic integration and failure injection | Extended workflow and upgrade tests | v0.3 adds one live paired two-turn pilot and four deterministic MLflow comparisons; generalized productivity and business gains remain unmeasured |
 
 The first improvement priority was evaluation and failure behavior, not matching a large project's feature count. A repeated customer cannot cross the configured group boundary. Equal timestamps cannot straddle a chronological boundary. A failed MLflow terminal write cannot leave a persisted successful lifecycle claim. A restarted Optuna controller cannot silently launch the same linked fit again.
+
+The [comparison report](BENCHMARK.md) includes unfavorable findings: the initial plugin pilot made 36 tool calls versus 22 for the direct workflow, with two parameter errors subsequently fixed. Both completed without extra user answers. Further priorities are bounded polling/batching through DSH PTC, explicitly preregistered retraining criteria, repeated/counterbalanced trials, and a supported confined backend provider. Python execution is still host-local, not inherited from the DSH shell sandbox.
 
 Official sources reviewed for the gap analysis:
 

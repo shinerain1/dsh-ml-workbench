@@ -1,39 +1,72 @@
 {
   "name": "dsh-ml-workbench",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MLflow experiment workflows for DSH: track, branch, compare and reproduce local CSV models",
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {
-    ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" },
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
     "./package.json": "./package.json",
     "./cordis.patch.yml": "./cordis.patch.yml"
   },
-  "files": ["lib", "python/dsh_ml_workbench/*.py", "pyproject.toml", "requirements.lock", "cordis.patch.yml", "icon.svg", "README.md", "README.zh.md", "LICENSE", "docs", "examples/*.py"],
+  "files": [
+    "lib",
+    "python/dsh_ml_workbench/*.py",
+    "pyproject.toml",
+    "requirements.lock",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "docs",
+    "examples/*.py"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:check": "tsc -p tsconfig.json --noEmit",
     "test": "node --test tests-node/*.test.mjs",
     "check": "npm run build && npm run build:check && npm test"
   },
-  "engines": { "node": ">=24.9.0", "dsh": ">=0.2.2-alpha.3 <0.3.0" },
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": ">=0.2.2-alpha.3 <0.3.0"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": ">=4.0.6-alpha.2 <5",
     "@deepseek-ai/dsh-tools": ">=0.0.1-rc.1 <0.3.0"
   },
-  "dependencies": { "@deepseek-ai/schemastery": "3.19.0" },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "3.19.0"
+  },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.1.0",
     "@deepseek-ai/dsh-tools": "0.0.1-rc.1",
     "@types/node": "^24.0.0",
     "typescript": "^5.9.0"
   },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
-  "keywords": ["dsh-plugin", "mlflow", "machine-learning", "experiments", "reproducibility"],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "mlflow",
+    "machine-learning",
+    "experiments",
+    "reproducibility"
+  ],
   "author": "shinerain1",
   "license": "MIT",
   "icon": "./icon.svg",
-  "repository": { "type": "git", "url": "git+https://github.com/shinerain1/dsh-ml-workbench.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shinerain1/dsh-ml-workbench.git"
+  },
   "homepage": "https://github.com/shinerain1/dsh-ml-workbench#readme"
 }

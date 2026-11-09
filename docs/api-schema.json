@@ -2,6 +2,31 @@
   "protocol_version": 1,
   "schemas": {
     "rpc": {
+      "$defs": {
+        "DshContext": {
+          "additionalProperties": false,
+          "properties": {
+            "session_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Session Id",
+              "type": "string"
+            },
+            "call_id": {
+              "maxLength": 512,
+              "minLength": 1,
+              "title": "Call Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "session_id",
+            "call_id"
+          ],
+          "title": "DshContext",
+          "type": "object"
+        }
+      },
       "additionalProperties": false,
       "properties": {
         "protocol_version": {
@@ -13,6 +38,7 @@
         "operation": {
           "enum": [
             "health",
+            "resume",
             "create",
             "start",
             "get",
@@ -36,6 +62,17 @@
           "additionalProperties": true,
           "title": "Args",
           "type": "object"
+        },
+        "dsh_context": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DshContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -221,6 +258,40 @@
         "task"
       ],
       "title": "CreateRequest",
+      "type": "object"
+    },
+    "resume": {
+      "additionalProperties": false,
+      "properties": {
+        "previous_session_id": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Session Id"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "offset": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "title": "ResumeRequest",
       "type": "object"
     },
     "start": {

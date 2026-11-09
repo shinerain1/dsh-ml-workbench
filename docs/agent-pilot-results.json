@@ -1,0 +1,89 @@
+{
+  "kind": "live-dsh-agent-pilot",
+  "replicates_per_arm": 1,
+  "turns_per_arm": 2,
+  "model": "deepseek-official/deepseek-flash",
+  "reasoning_effort": "low",
+  "arms": {
+    "without-plugin": {
+      "accuracies": [
+        0.8125,
+        0.84375,
+        0.84375
+      ],
+      "same_session_restored": true,
+      "old_artifact_hashes_unchanged": 29,
+      "parent_link_verified": true,
+      "fitted_preprocessor_bytes_equal": true,
+      "isolated_delivery_metric_reproduction": true,
+      "estimator_fit_calls_during_reproduction": 0,
+      "tool_calls_by_turn": [
+        11,
+        11
+      ],
+      "tool_calls": {
+        "pwsh": 16,
+        "write": 3,
+        "read": 1,
+        "edit": 2
+      },
+      "executor_reported_tool_errors": 0,
+      "error_summaries": [],
+      "usage": {
+        "inputTokens": 14226,
+        "outputTokens": 27314,
+        "cacheReadTokens": 550656,
+        "cacheWriteTokens": 0,
+        "totalTokens": 592196
+      },
+      "extra_user_answers": 0
+    },
+    "with-plugin": {
+      "accuracies": [
+        0.8125,
+        0.84375,
+        0.84375
+      ],
+      "same_session_restored": true,
+      "old_artifact_hashes_unchanged": 4,
+      "parent_link_verified": true,
+      "fitted_preprocessor_bytes_equal": true,
+      "isolated_delivery_metric_reproduction": true,
+      "estimator_fit_calls_during_reproduction": 1,
+      "tool_calls_by_turn": [
+        15,
+        21
+      ],
+      "tool_calls": {
+        "ml_workbench_health": 1,
+        "pwsh": 15,
+        "ml_experiment_create": 4,
+        "ml_experiment_start": 3,
+        "ml_experiment_get": 6,
+        "ml_experiment_compare": 2,
+        "write": 2,
+        "ml_experiment_branch": 1,
+        "ml_experiment_export": 1,
+        "read": 1
+      },
+      "executor_reported_tool_errors": 2,
+      "error_summaries": [
+        "Error: INVALID_ARGUMENTS: 1 validation error for CreateRequest",
+        "Error: INVALID_ARGUMENTS: 1 validation error for CreateRequest"
+      ],
+      "usage": {
+        "inputTokens": 19892,
+        "outputTokens": 9462,
+        "cacheReadTokens": 674688,
+        "cacheWriteTokens": 0,
+        "totalTokens": 704042
+      },
+      "extra_user_answers": 0
+    }
+  },
+  "excluded_setup_attempts": 2,
+  "excluded_reason": "DSH Windows sandbox ACL failure in the E-drive workspace",
+  "posthoc_measurement": "Estimator fit-call instrumentation was added after noticing that baseline reproduction only reloads a model; it was not a preregistered success gate.",
+  "cross_arm_same_partition_rows": true,
+  "cross_arm_row_order_equal": false
+}

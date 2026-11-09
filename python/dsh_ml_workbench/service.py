@@ -32,7 +32,7 @@ from .files import (
     tree_hashes,
     verify_tree,
 )
-from .spec import ExperimentSpec, WorkbenchError
+from .spec import DshContext, ExperimentSpec, ResumeRequest, WorkbenchError
 from .store import TERMINAL, Store
 
 STARTUP_GRACE_SECONDS = 30
@@ -59,7 +59,8 @@ def owned_process(record: dict):
 
 
 class Workbench:
-    def __init__(self, root: Path, *, allow_custom_code: bool = False):
+    def __init__(self, root: Path, *, allow_custom_code: bool = False, dsh_context: dict | None = None):
+        self.dsh_context = DshContext.model_validate(dsh_context).model_dump() if dsh_context is not None else None
         self.store = Store(root)
         self.root = self.store.root
         self.allow_custom_code = allow_custom_code
@@ -125,6 +126,7 @@ class Workbench:
         with self.store.lock:
             previous = self.store.previous_request(request_key, payload_hash)
             if previous is not None:
+                self.store.link(self.dsh_context, "run", previous["run_id"])
                 return previous
             has_custom = spec.preprocessor_path is not None or spec.estimator_path is not None
             if has_custom and not self.allow_custom_code:
@@ -212,12 +214,16 @@ class Workbench:
                 manifest = {"format": 1, "contract": contract, "files": tree_hashes(inputs),
                             "parent_run_id": parent["run_id"] if parent else None,
                             "preprocessing_hash": preprocessor_hash}
+                if self.dsh_context is not None:
+                    manifest["dsh_context"] = self.dsh_context
                 atomic_json(staging / "manifest.json", manifest)
                 experiment = self.client.get_experiment_by_name(spec.experiment_name)
                 experiment_id = experiment.experiment_id if experiment else self.client.create_experiment(
                     spec.experiment_name, artifact_location=(self.root / "mlflow-artifacts").as_uri())
                 tags = {"mlwb.version": __version__, "mlwb.state": "created", "mlwb.comparison_key": digest(contract),
                         "mlwb.dataset_sha256": dataset_hash, "mlwb.preprocessing_hash": preprocessor_hash}
+                if self.dsh_context is not None:
+                    tags.update({"mlwb.dsh." + key: value for key, value in self.dsh_context.items()})
                 if parent:
                     tags["mlflow.parentRunId"] = parent["run_id"]
                 run_id = self.client.create_run(experiment_id, tags=tags, run_name=spec.name).info.run_id
@@ -237,6 +243,8 @@ class Workbench:
                           "preprocessing_hash": preprocessor_hash, "parent_run_id": parent["run_id"] if parent else None,
                           "task": spec.task, "model": spec.model, "custom_code": has_custom, "pid": None,
                           "reused_preprocessing": reuse_preprocessing}
+                if self.dsh_context is not None:
+                    record["dsh_context"] = self.dsh_context
                 self.store.save(record, request_key=request_key, payload_hash=payload_hash)
                 return record
             except Exception:
@@ -310,6 +318,27 @@ class Workbench:
             ids = self.store.list_ids(limit + 1, offset, state, model, parent_run_id)
             return {"runs": [self._get_locked(run_id) for run_id in ids[:limit]],
                     "next_offset": offset + limit if len(ids) > limit else None}
+
+    def resume(self, previous_session_id: str | None = None, limit: int = 20, offset: int = 0) -> dict:
+        request = ResumeRequest(previous_session_id=previous_session_id, limit=limit, offset=offset)
+        session_id = request.previous_session_id or (self.dsh_context or {}).get("session_id")
+        if session_id is None:
+            raise WorkbenchError("DSH_SESSION_REQUIRED", "Call from a DSH Session or supply previous_session_id")
+        with self.store.lock:
+            links = self.store.session_links(session_id, limit + 1, offset)
+            resources = []
+            for link in links[:limit]:
+                if link["kind"] == "run":
+                    record = self._get_locked(link["ref"])
+                    resources.append({**link, "state": record["state"], "name": record["name"],
+                                      "next_tool": "ml_experiment_get", "arguments": {"run_id": link["ref"]}})
+                else:
+                    resources.append({**link, "state": "unverified", "next_tool": "ml_search_get",
+                                      "arguments": {"study_name": link["ref"]}})
+            return {"session_id": session_id, "resources": resources,
+                    "next_offset": offset + limit if len(links) > limit else None,
+                    "note": "References only; metrics and artifacts are not verified by resume. No training is started. "
+                            "A study reference may be an interrupted creation intent; retry its original search_create if absent."}
 
     def cancel(self, run_id: str) -> dict:
         with self.store.lock:

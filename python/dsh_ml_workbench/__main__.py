@@ -23,6 +23,7 @@ def dispatch(workbench, request):
         InspectRequest,
         ListRequest,
         PredictRequest,
+        ResumeRequest,
         RunRequest,
         SearchCreateRequest,
         SearchRequest,
@@ -31,6 +32,9 @@ def dispatch(workbench, request):
 
     args = dict(request.args)
     operation = request.operation
+    if operation in {"create", "branch"} and args.get("request_key") is None and workbench.dsh_context:
+        from .files import digest
+        args["request_key"] = "dsh:" + digest({"operation": operation, **workbench.dsh_context})
     if operation == "health":
         from importlib.metadata import version
 
@@ -41,18 +45,24 @@ def dispatch(workbench, request):
         return {"version": __version__, "protocol_version": 1, "tracking_uri": workbench.tracking_uri,
                 "root": str(workbench.root), "allow_custom_code": workbench.allow_custom_code,
                 "environment": environment(), "optuna_version": version("optuna"),
-                "features": ["random/group/time splits", "Optuna ask/tell", "batch prediction", "experiment diff", "HTML export"]}
+                "features": ["random/group/time splits", "Optuna ask/tell", "batch prediction", "experiment diff", "HTML export",
+                             "DSH Session recovery", "DSH invocation replay identity"]}
     if operation == "create":
         args = CreateRequest.model_validate(args).model_dump()
         request_key = args.pop("request_key", None)
         return workbench.create(ExperimentSpec.model_validate(args), request_key)
-    schemas = {"start": RunRequest, "get": RunRequest, "list": ListRequest, "cancel": RunRequest,
+    schemas = {"resume": ResumeRequest, "start": RunRequest, "get": RunRequest, "list": ListRequest, "cancel": RunRequest,
                "branch": BranchRequest, "compare": CompareRequest, "export": ExportRequest,
                "inspect": InspectRequest, "diff": DiffRequest, "predict": PredictRequest,
                "search_create": SearchCreateRequest, "search_step": SearchRequest,
                "search_get": SearchRequest, "search_cancel": SearchRequest}
     validated = schemas[operation].model_validate(args).model_dump()
-    return getattr(workbench, operation)(**validated)
+    result = getattr(workbench, operation)(**validated)
+    if result.get("run_id"):
+        workbench.store.link(workbench.dsh_context, "run", result["run_id"])
+    if result.get("study_name"):
+        workbench.store.link(workbench.dsh_context, "study", result["study_name"])
+    return result
 
 
 def main() -> int:
@@ -74,7 +84,8 @@ def main() -> int:
             if len(raw) > 1024 * 1024:
                 raise WorkbenchError("REQUEST_TOO_LARGE", "RPC input exceeds 1 MiB")
             request = RpcRequest.model_validate_json(raw)
-            workbench = Workbench(options.root, allow_custom_code=options.allow_custom_code)
+            workbench = Workbench(options.root, allow_custom_code=options.allow_custom_code,
+                                  dsh_context=request.dsh_context.model_dump() if request.dsh_context else None)
             result = dispatch(workbench, request)
         response = {"protocol_version": 1, "ok": True, "result": result}
     except Exception as error:

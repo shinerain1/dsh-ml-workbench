@@ -1,8 +1,8 @@
 # DSH ML Workbench
 
-[中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION-v0.2.md) · [Upstream reuse](docs/UPSTREAM.md)
+[中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION-v0.3.md) · [Upstream reuse](docs/UPSTREAM.md)
 
-A DeepSeek Harness plugin adapting **MLflow, Optuna and scikit-learn** into an agent-accessible experiment workflow. Version 0.2.0 provides 16 tools for CSV inspection, experiments, durable tuning, comparisons, prediction and reproducible delivery. Training algorithms, sampling, model serialization and tracking come from established libraries. See the candid [capability review](docs/MATURITY.md) for the remaining gap to full upstream platforms.
+A DeepSeek Harness plugin adapting **MLflow, Optuna and scikit-learn** into an agent-accessible experiment workflow. Version 0.3.0 provides 17 tools for CSV inspection, experiments, durable tuning, comparisons, prediction and reproducible delivery. Training algorithms, sampling, model serialization and tracking come from established libraries. See the candid [capability review](docs/MATURITY.md) for the remaining gap to full upstream platforms.
 
 Ask DSH to train several repurchase classifiers, then say: “Keep the third experiment's fitted preprocessing, try a faster model, and compare.” The branch gets a new MLflow run, copies the exact fitted transformer, retains the same validation rows and leaves the parent untouched.
 
@@ -14,8 +14,8 @@ Download the Python wheel, `requirements.lock` and plugin `.tgz` from [Releases]
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.2.0-py3-none-any.whl
-dsh plugin --profile desktop add .\dsh-ml-workbench-0.2.0.tgz
+.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.3.0-py3-none-any.whl
+dsh plugin --profile desktop add .\dsh-ml-workbench-0.3.0.tgz
 ```
 
 Alternatively enable **Custom plugin index** in DSH's experimental plugins, open **Discover**, and add:
@@ -106,4 +106,6 @@ npm run check
 .\.venv\Scripts\python.exe scripts/demo-v2.py --root .verification/new-demo-v2 --report docs/v2-results.json
 ```
 
-Use a new demo root each time. [Validation](docs/VALIDATION-v0.2.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.
+Use a new demo root each time. [Validation](docs/VALIDATION-v0.3.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.
+
+Session recovery and exact-call retry identity: [DSH integration](docs/DSH-INTEGRATION.md). Controlled comparison: [experiment report](docs/BENCHMARK.md).

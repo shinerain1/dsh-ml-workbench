@@ -1,8 +1,8 @@
 # DSH 机器学习实验工作台
 
-[English](README.md) · [接口说明](docs/API.md) · [实测证据](docs/VALIDATION-v0.2.md) · [成熟项目复用说明](docs/UPSTREAM.md)
+[English](README.md) · [接口说明](docs/API.md) · [实测证据](docs/VALIDATION-v0.3.md) · [成熟项目复用说明](docs/UPSTREAM.md)
 
-这是把 **MLflow + Optuna + scikit-learn 适配到 DeepSeek Harness** 的插件：DSH 负责理解需求、写代码和解释结果，插件负责实验状态与交付。v0.2.0 提供 16 个工具，支持本地 CSV 分类、回归、持久化调参、批量预测和实验比较。[功能成熟度审查](docs/MATURITY.md) 如实列出与大型上游平台的差距。
+这是把 **MLflow + Optuna + scikit-learn 适配到 DeepSeek Harness** 的插件：DSH 负责理解需求、写代码和解释结果，插件负责实验状态与交付。v0.3.0 提供 17 个工具，支持本地 CSV 分类、回归、持久化调参、批量预测和实验比较。[功能成熟度审查](docs/MATURITY.md) 如实列出与大型上游平台的差距。
 
 项目的贡献是 Agent 实验流程适配。实验记录和模型产物使用 MLflow，调参使用 Optuna，训练、预处理和指标使用 scikit-learn，没有另写训练算法或调参算法。
 
@@ -27,8 +27,8 @@
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.2.0-py3-none-any.whl
-dsh plugin --profile desktop add .\dsh-ml-workbench-0.2.0.tgz
+.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.3.0-py3-none-any.whl
+dsh plugin --profile desktop add .\dsh-ml-workbench-0.3.0.tgz
 ```
 
 也可打开 DSH **插件 → 实验性插件 → 自定义插件索引**，进入 **发现 → 添加索引源**，填写：
@@ -99,4 +99,6 @@ python reproduce.py --data /path/to/original.csv
 
 默认采用 IID 随机留出法，并提供显式分组/时间划分。Optuna 已接入，但不包含并行调参、剪枝、嵌套交叉验证、分布式训练、DVC 或 RD-Agent 接入。调参需要 DSH 持续调用 step 推进；关闭 DSH 后只保留当前训练，不会后台自动开始下一轮。超时在轮询时检查，不是后台硬时限。多轮挑选同一验证集会带来选择偏差，最终效果应使用独立测试集评估。
 
-[验证报告](docs/VALIDATION-v0.2.md) 区分确定性集成测试与真实 Agent 对照实验。已运行的合成数据结果不能被写成真实复购业务收益，也不能推导“减少人工介入”的结论。
+[验证报告](docs/VALIDATION-v0.3.md) 区分确定性集成测试与真实 Agent 对照实验。已运行的合成数据结果不能被写成真实复购业务收益，也不能推导“减少人工介入”的结论。
+
+新增 DSH 会话关联、同一调用的自动去重和 `ml_workbench_resume` 恢复工具。详见 [DSH 适配说明](docs/DSH-INTEGRATION.md)和[对照实验报告](docs/BENCHMARK.md)。

@@ -1,5 +1,7 @@
 # Architecture and guarantees
 
+Version 0.3 adds [DSH Session integration](DSH-INTEGRATION.md): a host-supplied invocation envelope, Session links in the lifecycle ledger, automatic keys for exact invocation replay, and a bounded resume tool. This extends the MLflow/Optuna workflow without replacing DSH's agent loop. Native tool policy and cancellation apply before dispatch; Python remains host-local.
+
 ```mermaid
 flowchart LR
     A[DSH agent] --> B[Sixteen native DSH tools]

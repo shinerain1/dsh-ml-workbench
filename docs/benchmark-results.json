@@ -1,0 +1,130 @@
+{
+  "kind": "deterministic-workflow-mechanism-comparison",
+  "model_calls": 0,
+  "agent_ab_test": false,
+  "human_interventions_measured": false,
+  "baseline": "Direct MLflow with the same frozen sklearn recipe, full input/model logging, and separate explicit-check positive controls",
+  "pairs": [
+    {
+      "task": "classification",
+      "seed": 7,
+      "direct_mlflow_metrics": {
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "f1_macro": 0.8745098039215686,
+        "log_loss": 0.2275968480493382,
+        "roc_auc": 0.98046875,
+        "average_precision": 0.9851190476190477
+      },
+      "plugin_metrics": {
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "f1_macro": 0.8745098039215686,
+        "log_loss": 0.2275968480493382,
+        "roc_auc": 0.98046875,
+        "average_precision": 0.9851190476190477
+      },
+      "maximum_absolute_metric_delta": 0.0,
+      "direct_mlflow_record_categories": 8,
+      "plugin_record_categories": 8,
+      "record_categories_total": 8,
+      "direct_mlflow_reproduced": true,
+      "plugin_standalone_reproduced": true
+    },
+    {
+      "task": "classification",
+      "seed": 19,
+      "direct_mlflow_metrics": {
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "f1_macro": 0.875,
+        "log_loss": 0.2831151318646207,
+        "roc_auc": 0.9609375,
+        "average_precision": 0.9635690789473685
+      },
+      "plugin_metrics": {
+        "accuracy": 0.875,
+        "balanced_accuracy": 0.875,
+        "f1_macro": 0.875,
+        "log_loss": 0.2831151318646207,
+        "roc_auc": 0.9609375,
+        "average_precision": 0.9635690789473685
+      },
+      "maximum_absolute_metric_delta": 0.0,
+      "direct_mlflow_record_categories": 8,
+      "plugin_record_categories": 8,
+      "record_categories_total": 8,
+      "direct_mlflow_reproduced": true,
+      "plugin_standalone_reproduced": true
+    },
+    {
+      "task": "classification",
+      "seed": 41,
+      "direct_mlflow_metrics": {
+        "accuracy": 0.8125,
+        "balanced_accuracy": 0.8125,
+        "f1_macro": 0.8117647058823529,
+        "log_loss": 0.2883121840101511,
+        "roc_auc": 0.953125,
+        "average_precision": 0.9561298076923077
+      },
+      "plugin_metrics": {
+        "accuracy": 0.8125,
+        "balanced_accuracy": 0.8125,
+        "f1_macro": 0.8117647058823529,
+        "log_loss": 0.2883121840101511,
+        "roc_auc": 0.953125,
+        "average_precision": 0.9561298076923077
+      },
+      "maximum_absolute_metric_delta": 0.0,
+      "direct_mlflow_record_categories": 8,
+      "plugin_record_categories": 8,
+      "record_categories_total": 8,
+      "direct_mlflow_reproduced": true,
+      "plugin_standalone_reproduced": true
+    },
+    {
+      "task": "regression",
+      "seed": 7,
+      "direct_mlflow_metrics": {
+        "rmse": 2.6509746992330463,
+        "mae": 2.1945796635245043,
+        "r2": 0.9997939185830135
+      },
+      "plugin_metrics": {
+        "rmse": 2.6509746992330463,
+        "mae": 2.1945796635245043,
+        "r2": 0.9997939185830135
+      },
+      "maximum_absolute_metric_delta": 0.0,
+      "direct_mlflow_record_categories": 8,
+      "plugin_record_categories": 8,
+      "record_categories_total": 8,
+      "direct_mlflow_reproduced": true,
+      "plugin_standalone_reproduced": true
+    }
+  ],
+  "faults": {
+    "lost_creation_response_unique_runs": {
+      "raw_mlflow": 2,
+      "mlflow_with_explicit_tag_lookup": 1,
+      "plugin_same_dsh_call": 1
+    },
+    "incompatible_split_ranking_rejected": {
+      "raw_mlflow": false,
+      "mlflow_with_explicit_split_check": true,
+      "plugin": true
+    },
+    "post_success_model_mutation_rejected": {
+      "raw_mlflow_get_run": false,
+      "mlflow_with_explicit_hash_check": true,
+      "plugin_export": true
+    }
+  },
+  "limitations": [
+    "Shared adapter recipe isolates workflow behavior; it is not independently authored DSH code.",
+    "Explicit baseline tag lookup is serial, not a concurrency-safe idempotency service.",
+    "No LLM, human-intervention, cost, speed or model-quality advantage is measured.",
+    "Fault cases are preselected design checks, not estimates of real incident frequency."
+  ]
+}

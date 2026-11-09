@@ -1,0 +1,12 @@
+{
+  "kind": "keyless-native-executor",
+  "real_dsh_agents": true,
+  "model_calls": 0,
+  "same_call_replay_unique_runs": 1,
+  "other_session_unique_runs": 1,
+  "resume_resources": 1,
+  "policy_denial_prevented_creation": true,
+  "pre_aborted_call_prevented_creation": true,
+  "plugin_restart_recovered": true,
+  "dsh_session_log_reload_tested": false
+}

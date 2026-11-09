@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Link experiments and studies to immutable DSH Session/tool-call identity; add bounded `ml_workbench_resume` recovery after restart or compaction.
+- Deduplicate exact create/branch invocation replay automatically, retaining explicit request keys for new calls and PTC reruns.
+- Declare typed canonical run/study/recovery fields for DSH PTC generation; keep Native policy, cancellation and plugin disposal behavior.
+- Distinguish control timeouts from cancellation and explain how to recover possibly committed work.
+- Fix a friction point observed in the live pilot: accept redundant native sklearn `random_state=seed` and `n_jobs=1`, while rejecting conflicting execution controls.
+- Add controlled comparisons against direct MLflow and explicit-check positive controls, actual DSH Native-executor checks, and scripts for a live two-turn Agent pilot. No model-quality or general productivity gain is assumed.
+
 ## 0.2.0
 
 - Integrate Optuna 5.0.0 TPE ask/tell with durable SQLite studies, MLflow trial links, bounded sequential scheduling, retry-safe recovery and cancellation.

@@ -42,6 +42,20 @@ class ExperimentSpec(StrictModel):
     preprocessor_path: str | None = None
     estimator_path: str | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_matching_sklearn_controls(cls, value):
+        """Accept redundant native sklearn controls without changing the managed seed/CPU policy."""
+        if not isinstance(value, dict) or not isinstance(value.get("params"), dict):
+            return value
+        params = dict(value["params"])
+        for field, expected in (("random_state", value.get("seed", 42)), ("n_jobs", 1)):
+            if field in params:
+                if type(params[field]) is not int or params[field] != expected:
+                    raise ValueError(f"params.{field} must equal {'seed' if field == 'random_state' else '1'}; conflicting execution controls are not allowed")
+                del params[field]
+        return {**value, "params": params}
+
     @model_validator(mode="after")
     def validate_model(self):
         names = {"random_forest", "extra_trees", "hist_gradient_boosting", "custom"}
@@ -50,8 +64,6 @@ class ExperimentSpec(StrictModel):
             raise ValueError(f"model must be one of {sorted(names)} for {self.task}")
         if (self.model == "custom") != (self.estimator_path is not None):
             raise ValueError("custom model requires estimator_path; other models must omit it")
-        if {"random_state", "n_jobs"} & self.params.keys():
-            raise ValueError("use seed instead of random_state; n_jobs is fixed at 1")
         if self.target in self.preprocessing.drop_columns:
             raise ValueError("drop_columns must not contain the target")
         if self.split.column == self.target:
@@ -152,11 +164,23 @@ class SearchCreateRequest(SearchRequest):
         return self
 
 
+class DshContext(StrictModel):
+    session_id: str = Field(min_length=1, max_length=512)
+    call_id: str = Field(min_length=1, max_length=512)
+
+
+class ResumeRequest(StrictModel):
+    previous_session_id: str | None = Field(default=None, min_length=1, max_length=512)
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+
 class RpcRequest(StrictModel):
     protocol_version: Literal[1] = 1
-    operation: Literal["health", "create", "start", "get", "list", "cancel", "branch", "compare", "export",
+    operation: Literal["health", "resume", "create", "start", "get", "list", "cancel", "branch", "compare", "export",
                        "inspect", "diff", "predict", "search_create", "search_step", "search_get", "search_cancel"]
     args: dict[str, Any] = Field(default_factory=dict)
+    dsh_context: DshContext | None = None
 
 
 class WorkbenchError(Exception):
