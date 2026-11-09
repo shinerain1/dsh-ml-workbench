@@ -12,6 +12,13 @@ This report describes executed checks, not a proposed experiment or a claim of i
 - The `.tgz` was installed by the actual DSH CLI plugin manager into an isolated headless profile. The resolved profile includes the installed bundle's `ml-workbench` entry. pnpm reported peer-dependency warnings; native-host execution is separately tested above.
 - The **installed** bundle was then executed against the actual DSH native tool executor using a fresh virtual environment containing the release wheel. Health and unload passed, and `pip check` found no broken dependencies.
 - [packaging-results.json](packaging-results.json) records independent reconstruction of both exported deliveries in the new virtual environment. Both sets of reproduced metrics match; the imported backend came from the installed wheel in site-packages, not the editable source tree.
+- The wheel-installed backend also passed the full Node tool-lifecycle integration case (52.77 s): create, start, get, export, invalid argument rejection and plugin unload.
+
+## Publication verification
+
+The repository and [v0.1.0 release](https://github.com/shinerain1/dsh-ml-workbench/releases/tag/v0.1.0) are public. Five release assets are present: DSH tgz, Python wheel, Python source archive, requirements.lock and SHA256SUMS.txt. GitHub's asset SHA-256 values were compared with the local checksums and match.
+
+The [published index](https://raw.githubusercontent.com/shinerain1/dsh-ml-workbench/main/market/index.json) returned HTTP 200 without redirection and passed the actual DSH `parseMarketIndex` validator. Its Git install target is fixed to `bf96d801f09d2e516ad2247333dea013f5ebfeae`. The DSH CLI successfully installed this public Git target into another fresh headless profile. The published package contains compiled JavaScript and does not require a source build during installation.
 
 An online headless DSH request was attempted using the configured account provider. It stopped before inference with `ACCOUNT_SIGN_IN_REQUIRED`. No online natural-language workflow or native-versus-plugin agent trial is claimed for this release. Existing account credentials were neither printed nor included in artifacts. The user can complete this check after signing in to DeepSeek in DSH.
 
