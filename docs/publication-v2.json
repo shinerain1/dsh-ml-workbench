@@ -1,0 +1,33 @@
+{
+    "asset_hashes_match":  true,
+    "source_commit":  "9e38f4c250fd6311c4b5b6599fcd7d42d99bdd2f",
+    "version":  "0.2.0",
+    "release":  "https://github.com/shinerain1/dsh-ml-workbench/releases/tag/v0.2.0",
+    "assets":  [
+                   {
+                       "sha256":  "sha256:dae09ef2c7270851678da2f9fd523fb3523ff38fe9798d76003a7d45c39f3d7f",
+                       "name":  "dsh-ml-workbench-0.2.0.tgz",
+                       "bytes":  58534
+                   },
+                   {
+                       "sha256":  "sha256:a20b045f8db81f4f78ce766596e906183f1c908f1b53cac599865f06c61f1905",
+                       "name":  "dsh_ml_workbench-0.2.0-py3-none-any.whl",
+                       "bytes":  35807
+                   },
+                   {
+                       "sha256":  "sha256:841afab1c4c1ec2d289cac1b869b8362a077b4fa85b7403215c880d269421530",
+                       "name":  "dsh_ml_workbench-0.2.0.tar.gz",
+                       "bytes":  72961
+                   },
+                   {
+                       "sha256":  "sha256:c19fdc0cc6048b57ca8aaeeae37c6d6b97adea9f262e8ed1747ddfdea1e19370",
+                       "name":  "requirements.lock",
+                       "bytes":  2013
+                   },
+                   {
+                       "sha256":  "sha256:8e02a58b642dde605ae8aeb6efc05757fa1558bb532b4de63d281eab4765e732",
+                       "name":  "SHA256SUMS-v0.2.0.txt",
+                       "bytes":  383
+                   }
+               ]
+}

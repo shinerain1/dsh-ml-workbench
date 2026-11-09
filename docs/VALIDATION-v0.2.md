@@ -8,7 +8,7 @@ The [capability review](MATURITY.md) distinguishes implemented behavior from ful
 
 Coverage includes real classification/regression fits, serialized predictions, fitted-preprocessor branches, standalone exports, group/time boundaries including timestamp ties, missing features, probability metrics, baseline/confusion reports, escaped HTML labels, study persistence, concurrent step calls, finite budgets, cancellation, lost responses, worker death, PID reuse, input/metric tampering, MLflow artifact-copy corruption and terminal-write failure.
 
-The Node suite passed all **3 cases** (95.66 seconds), driving the Python backend through the official tool registry. The actual DSH checkout `8bd073392eef6f54e921a093b95076248eb08cbb` (`0.2.2-alpha.3`) mounted **16 tools**, executed health through its native batch executor and disposed them successfully. TypeScript build/typecheck and Python lint passed.
+The Node suite passed all **3 cases** (95.66 seconds initially; 65.47 seconds after artifact-copy hardening), driving the Python backend through the official tool registry. The actual DSH checkout `8bd073392eef6f54e921a093b95076248eb08cbb` (`0.2.2-alpha.3`) mounted **16 tools**, executed health through its native batch executor and disposed them successfully. TypeScript build/typecheck and Python lint passed.
 
 ## Synthetic workflow
 
@@ -27,6 +27,8 @@ The groups and dates are synthetic fixtures designed to test boundary behavior, 
 [upgrade-results.json](upgrade-results.json) records training with the actual tagged v0.1.0 Python source, followed by a v0.2.0 fitted-preprocessor branch, comparison and export. The branch preserves the original engine bytes and evaluation identity. It does not silently convert an old score to a new evaluator.
 
 [packaging-results.json](packaging-results.json) records wheel installation into a new virtual environment and standalone reconstruction of the two v0.2 delivery archives. The reproduction helper validates checksums, dependency versions and numerical metrics. Installed source must come from site-packages rather than the editable repository.
+
+The finalized wheel's installed Python source was compared byte-for-byte with the released repository source. Its full DSH tool-lifecycle integration case passed in the fresh environment (52.50 seconds); `pip check` reported no broken dependencies. The DSH CLI installed the public Git source pinned to `9e38f4c250fd6311c4b5b6599fcd7d42d99bdd2f` into a fresh profile. The live index returned HTTP 200 without redirects, passed DSH validation and retained v0.1.0 alongside v0.2.0. [publication-v2.json](publication-v2.json) records five released assets whose GitHub digests match local SHA-256 values.
 
 Reproduce the checks from a clone:
 
