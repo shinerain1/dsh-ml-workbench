@@ -15,6 +15,11 @@ export interface ClientConfig {
   maxResponseBytes: number
 }
 
+export interface RpcTransport {
+  request(argv: string[], input: string, signal: AbortSignal): Promise<string>
+  launch(runId: string, token: string, signal: AbortSignal): Promise<void>
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -34,9 +39,9 @@ export class BackendClient {
   constructor(private readonly config: ClientConfig) {}
 
   /** Send one versioned request, preserving caller cancellation and byte limits. */
-  call(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation): Promise<JsonObject> {
+  call(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation, transport?: RpcTransport): Promise<JsonObject> {
     const fused = AbortSignal.any([signal, this.lifetime.signal, AbortSignal.timeout(this.config.requestTimeoutMs)])
-    const tracked = this.request(operation, args, fused, dshContext).finally(() => this.active.delete(tracked))
+    const tracked = this.request(operation, args, fused, dshContext, transport).finally(() => this.active.delete(tracked))
     this.active.add(tracked)
     return tracked
   }
@@ -47,16 +52,18 @@ export class BackendClient {
     await Promise.allSettled([...this.active])
   }
 
-  private async request(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation): Promise<JsonObject> {
+  private async request(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation, transport?: RpcTransport): Promise<JsonObject> {
     signal.throwIfAborted()
-    const request = JSON.stringify({ protocol_version: 1, operation, args, dsh_context: dshContext })
+    const request = JSON.stringify({ protocol_version: 1, expected_backend_version: '0.4.0', operation, args, dsh_context: dshContext })
     if (Buffer.byteLength(request) > 1024 * 1024) throw new Error('REQUEST_TOO_LARGE: RPC input exceeds 1 MiB')
     const argv = ['-m', 'dsh_ml_workbench', 'rpc', '--root', this.config.root]
     if (this.config.allowCustomCode) argv.push('--allow-custom-code')
-    const raw = await new Promise<string>((resolve, reject) => {
+    if (transport) argv.push('--external-workers')
+    const raw = transport ? await transport.request(argv, request, signal) : await new Promise<string>((resolve, reject) => {
+      const scrubbed = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/KEY|PASSWORD|SECRET|TOKEN/i.test(key) && !/^DSH_/i.test(key)))
       const child = spawn(this.config.pythonExecutable, argv, {
         shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, PYTHONUTF8: '1', MLFLOW_ENABLE_TELEMETRY: 'false' },
+        env: { ...scrubbed, PYTHONUTF8: '1', MLFLOW_ENABLE_TELEMETRY: 'false' },
       })
       const chunks: Buffer[] = []
       let bytes = 0
@@ -101,6 +108,12 @@ export class BackendClient {
       throw new Error(`${envelope.error.code}: ${envelope.error.message}`)
     }
     if (!isObject(envelope.result) || !isJson(envelope.result)) throw new Error('INVALID_BACKEND_RESPONSE: result must be a JSON object')
+    if (transport && Array.isArray(envelope.launches)) {
+      for (const launch of envelope.launches) {
+        if (!isObject(launch) || typeof launch.run_id !== 'string' || !/^[a-f0-9]{32}$/.test(launch.run_id) || typeof launch.token !== 'string' || !/^[a-f0-9]{32}$/.test(launch.token)) throw new Error('INVALID_BACKEND_RESPONSE: invalid worker identity')
+        await transport.launch(launch.run_id, launch.token, signal)
+      }
+    }
     return envelope.result
   }
 }

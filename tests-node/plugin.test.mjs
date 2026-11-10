@@ -31,7 +31,7 @@ async function fixture(t) {
 
 test('real DSH tool registry drives the Python MLflow lifecycle and unload removes tools', { timeout: 300000 }, async t => {
   const { ctx, plugin, directory, call } = await fixture(t)
-  assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('ml_')).length, 17)
+  assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('ml_')).length, 20)
   const path = join(directory, 'customers.csv')
   await writeFile(path, 'spend,visits,channel,target\n' + Array.from({ length: 80 }, (_, i) => `${i % 20},${i % 8},${i % 2 ? 'web' : 'shop'},${i % 4 > 1 ? 1 : 0}`).join('\n'))
   const created = await call('ml_experiment_create', { dataset_path: path, target: 'target', task: 'classification', model: 'logistic_regression', request_key: 'node-demo' })

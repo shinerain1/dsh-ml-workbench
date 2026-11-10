@@ -35,11 +35,26 @@
           "title": "Protocol Version",
           "type": "integer"
         },
+        "expected_backend_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Backend Version"
+        },
         "operation": {
           "enum": [
             "health",
             "resume",
             "create",
+            "run",
+            "wait",
+            "finalize",
             "start",
             "get",
             "list",
@@ -210,6 +225,213 @@
           "title": "Test Fraction",
           "type": "number"
         },
+        "final_test_fraction": {
+          "default": 0.2,
+          "exclusiveMaximum": 0.5,
+          "minimum": 0.0,
+          "title": "Final Test Fraction",
+          "type": "number"
+        },
+        "timeout_seconds": {
+          "default": 3600,
+          "maximum": 86400,
+          "minimum": 5,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "split": {
+          "$ref": "#/$defs/SplitSpec"
+        },
+        "preprocessor_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preprocessor Path"
+        },
+        "estimator_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimator Path"
+        },
+        "request_key": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Request Key"
+        }
+      },
+      "required": [
+        "dataset_path",
+        "target",
+        "task"
+      ],
+      "title": "CreateRequest",
+      "type": "object"
+    },
+    "run": {
+      "$defs": {
+        "Preprocessing": {
+          "additionalProperties": false,
+          "properties": {
+            "numeric_imputer": {
+              "default": "median",
+              "enum": [
+                "median",
+                "mean",
+                "most_frequent"
+              ],
+              "title": "Numeric Imputer",
+              "type": "string"
+            },
+            "scale_numeric": {
+              "default": true,
+              "title": "Scale Numeric",
+              "type": "boolean"
+            },
+            "max_categories": {
+              "default": 64,
+              "maximum": 4096,
+              "minimum": 2,
+              "title": "Max Categories",
+              "type": "integer"
+            },
+            "drop_columns": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Drop Columns",
+              "type": "array"
+            }
+          },
+          "title": "Preprocessing",
+          "type": "object"
+        },
+        "SplitSpec": {
+          "additionalProperties": false,
+          "properties": {
+            "strategy": {
+              "default": "random",
+              "enum": [
+                "random",
+                "group",
+                "time"
+              ],
+              "title": "Strategy",
+              "type": "string"
+            },
+            "column": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Column"
+            }
+          },
+          "title": "SplitSpec",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "dataset_path": {
+          "minLength": 1,
+          "title": "Dataset Path",
+          "type": "string"
+        },
+        "target": {
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        },
+        "task": {
+          "enum": [
+            "classification",
+            "regression"
+          ],
+          "title": "Task",
+          "type": "string"
+        },
+        "name": {
+          "default": "experiment",
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "experiment_name": {
+          "default": "DSH ML workbench",
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Experiment Name",
+          "type": "string"
+        },
+        "model": {
+          "default": "random_forest",
+          "title": "Model",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": true,
+          "title": "Params",
+          "type": "object"
+        },
+        "preprocessing": {
+          "$ref": "#/$defs/Preprocessing"
+        },
+        "seed": {
+          "default": 42,
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "test_fraction": {
+          "default": 0.2,
+          "exclusiveMaximum": 0.5,
+          "exclusiveMinimum": 0.0,
+          "title": "Test Fraction",
+          "type": "number"
+        },
+        "final_test_fraction": {
+          "default": 0.2,
+          "exclusiveMaximum": 0.5,
+          "minimum": 0.0,
+          "title": "Final Test Fraction",
+          "type": "number"
+        },
+        "timeout_seconds": {
+          "default": 3600,
+          "maximum": 86400,
+          "minimum": 5,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
         "split": {
           "$ref": "#/$defs/SplitSpec"
         },
@@ -295,6 +517,41 @@
       "type": "object"
     },
     "start": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "RunRequest",
+      "type": "object"
+    },
+    "wait": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "wait_seconds": {
+          "default": 30,
+          "maximum": 60,
+          "minimum": 0,
+          "title": "Wait Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "WaitRequest",
+      "type": "object"
+    },
+    "finalize": {
       "additionalProperties": false,
       "properties": {
         "run_id": {

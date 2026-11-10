@@ -38,6 +38,8 @@ class ExperimentSpec(StrictModel):
     preprocessing: Preprocessing = Field(default_factory=Preprocessing)
     seed: int = Field(default=42, ge=0, le=2**32 - 1)
     test_fraction: float = Field(default=0.2, gt=0.0, lt=0.5)
+    final_test_fraction: float = Field(default=0.2, ge=0.0, lt=0.5)
+    timeout_seconds: int = Field(default=3600, ge=5, le=86400)
     split: SplitSpec = Field(default_factory=SplitSpec)
     preprocessor_path: str | None = None
     estimator_path: str | None = None
@@ -58,6 +60,8 @@ class ExperimentSpec(StrictModel):
 
     @model_validator(mode="after")
     def validate_model(self):
+        if self.test_fraction + self.final_test_fraction >= 0.8:
+            raise ValueError("Validation and final-test fractions must leave at least 20% for training")
         names = {"random_forest", "extra_trees", "hist_gradient_boosting", "custom"}
         names.add("logistic_regression" if self.task == "classification" else "ridge")
         if self.model not in names:
@@ -86,6 +90,10 @@ class BranchRequest(StrictModel):
 
 class RunRequest(StrictModel):
     run_id: str
+
+
+class WaitRequest(RunRequest):
+    wait_seconds: int = Field(default=30, ge=0, le=60)
 
 
 class ListRequest(StrictModel):
@@ -177,7 +185,8 @@ class ResumeRequest(StrictModel):
 
 class RpcRequest(StrictModel):
     protocol_version: Literal[1] = 1
-    operation: Literal["health", "resume", "create", "start", "get", "list", "cancel", "branch", "compare", "export",
+    expected_backend_version: str | None = None
+    operation: Literal["health", "resume", "create", "run", "wait", "finalize", "start", "get", "list", "cancel", "branch", "compare", "export",
                        "inspect", "diff", "predict", "search_create", "search_step", "search_get", "search_cancel"]
     args: dict[str, Any] = Field(default_factory=dict)
     dsh_context: DshContext | None = None

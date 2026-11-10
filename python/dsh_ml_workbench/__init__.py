@@ -1,3 +1,3 @@
 """DSH adaptation of MLflow experiment tracking and scikit-learn pipelines."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

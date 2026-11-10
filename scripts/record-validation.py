@@ -16,11 +16,12 @@ cases = []
 for path in args.xml:
     tree = ET.parse(path)
     for case in tree.findall(".//testcase"):
-        assert case.find("failure") is None and case.find("error") is None and case.find("skipped") is None, case.attrib
-        cases.append({"name": case.attrib["classname"] + "." + case.attrib["name"], "seconds": float(case.attrib["time"])})
+        passed = all(case.find(kind) is None for kind in ("failure", "error", "skipped"))
+        cases.append({"name": case.attrib["classname"] + "." + case.attrib["name"], "seconds": float(case.attrib["time"]), "passed": passed})
 if args.latest_wins:
     cases = list({case["name"]: case for case in cases}.values())
 assert len({case["name"] for case in cases}) == len(cases), "Duplicate cases would inflate the count"
+assert all(case.pop("passed") for case in cases), "Every final case must pass; rerun failures before recording validation"
 atomic_json(args.output,
             {"version": __version__, "environment": environment(), "passed": len(cases), "cases": cases})
 print({"passed": len(cases), "version": __version__})

@@ -140,7 +140,7 @@ class Tuning:
                 "direction": study.direction.name.lower(), "budget": config["n_trials"], "trials": rows,
                 "best": best, "storage_uri": self.uri,
                 "next_action": "none" if state in {"cancelled", "complete"} else "Call search_step to reconcile and advance at most one trial",
-                "note": "Optimization reuses this validation split; best value is selection-biased. Use independent final-test data. Timeout is enforced on polling, not by a daemon."}
+                "note": "Optimization uses validation only. Finalize the selected model once on its reserved final test. New trials enforce their deadline in a background supervisor; polling also reconciles legacy trials."}
 
     def get(self, study_name):
         with self.storage() as storage:
@@ -214,4 +214,4 @@ class Tuning:
             raise WorkbenchError("INCOMPARABLE_EXPERIMENTS", "Trial evaluator differs from the search base; create a new study after upgrading")
         self.workbench.client.set_tag(record["run_id"], "optuna.study", study.user_attrs["mlwb.config"]["study_name"])
         self.workbench.client.set_tag(record["run_id"], "optuna.trial", str(number))
-        self.workbench.start(record["run_id"])
+        self.workbench.start(record["run_id"], timeout_seconds=study.user_attrs["mlwb.config"]["trial_timeout_seconds"])

@@ -59,7 +59,10 @@ def owned_process(record: dict):
 
 
 class Workbench:
-    def __init__(self, root: Path, *, allow_custom_code: bool = False, dsh_context: dict | None = None):
+    def __init__(self, root: Path, *, allow_custom_code: bool = False, dsh_context: dict | None = None,
+                 external_workers: bool = False):
+        self.external_workers = external_workers
+        self.pending_launches = []
         self.dsh_context = DshContext.model_validate(dsh_context).model_dump() if dsh_context is not None else None
         self.store = Store(root)
         self.root = self.store.root
@@ -256,18 +259,28 @@ class Workbench:
                 if staging.exists():
                     shutil.rmtree(staging)
 
-    def start(self, run_id: str) -> dict:
+    def start(self, run_id: str, *, timeout_seconds: int | None = None) -> dict:
         with self.store.lock:
             record = self._get_locked(run_id)
             if record["state"] != "created":
+                if record["state"] == "starting" and record.get("external_worker") and record.get("pid") is None:
+                    self.pending_launches.append({"run_id": run_id, "token": record["launch_token"]})
                 return record
             self._validate_inputs(record)
             if record["custom_code"] and not self.allow_custom_code:
                 raise WorkbenchError("CUSTOM_CODE_DISABLED", "Enable allowCustomCode before starting this experiment")
             token = uuid.uuid4().hex
-            record.update(launch_token=token, started_at=time.time())
+            config = read_json(self.run_dir(run_id) / "inputs" / "config.json")
+            timeout = timeout_seconds if timeout_seconds is not None else config.get("timeout_seconds", 3600)
+            if type(timeout) is not int or not 5 <= timeout <= 86400:
+                raise WorkbenchError("INVALID_TIMEOUT", "timeout_seconds must be an integer from 5 to 86400")
+            record.update(launch_token=token, started_at=time.time(), timeout_seconds=timeout,
+                          deadline_at=time.time() + timeout, external_worker=self.external_workers)
             self._set_state(record, "starting")
-            argv = [sys.executable, "-m", "dsh_ml_workbench", "worker", "--root", str(self.root),
+            if self.external_workers:
+                self.pending_launches.append({"run_id": run_id, "token": token})
+                return record
+            argv = [sys.executable, "-m", "dsh_ml_workbench", "supervise", "--root", str(self.root),
                     "--run-id", run_id, "--token", token]
             env = dict(os.environ, PYTHONUTF8="1", MLFLOW_ENABLE_TELEMETRY="false")
             options = {"start_new_session": True} if os.name != "nt" else {
@@ -299,6 +312,8 @@ class Workbench:
             if record["state"] == "succeeded":
                 record = {**record, **self._validate_outputs(record),
                           "model_uri": f"runs:/{run_id}/output/model"}
+                if record.get("final_hash"):
+                    record["final_test"] = self._validate_final(record)
             record["events"] = self.store.events(run_id)
             log = self.run_dir(run_id) / "worker.log"
             if log.exists():
@@ -306,6 +321,78 @@ class Workbench:
                     stream.seek(max(0, log.stat().st_size - 4000))
                     record["log_tail"] = stream.read().decode("utf-8", errors="replace")
             return record
+
+    def wait(self, run_id: str, wait_seconds: int = 30) -> dict:
+        """Bounded long-poll: one model turn can wait without repeated get calls."""
+        deadline = time.monotonic() + wait_seconds
+        while True:
+            with self.store.lock:
+                record = self._get_locked(run_id)
+            if record["state"] in TERMINAL or record["state"] == "created" or time.monotonic() >= deadline:
+                return self.get(run_id)
+            time.sleep(min(0.25, max(0, deadline - time.monotonic())))
+
+    def _validate_final(self, record: dict) -> dict:
+        folder = self.run_dir(record["run_id"]) / "final-test"
+        hashes = tree_hashes(folder)
+        if digest(hashes) != record.get("final_hash"):
+            raise WorkbenchError("INTEGRITY_MISMATCH", "Final-test artifacts changed")
+        result = read_json(folder / "result.json")
+        tracked = self.client.get_run(record["run_id"])
+        if any(tracked.data.metrics.get("final_test." + key) != value for key, value in result["metrics"].items()):
+            raise WorkbenchError("TRACKING_MISMATCH", "MLflow final-test metrics changed")
+        artifact_root = Path(url2pathname(urlsplit(tracked.info.artifact_uri).path)).resolve()
+        verify_tree(artifact_root / "final-test", hashes)
+        return result
+
+    def finalize(self, run_id: str) -> dict:
+        """Commit model selection before exposing final labels or scores; same-run retries are safe."""
+        with self.store.lock:
+            record = self._get_locked(run_id)
+            self._validate_outputs(record)
+            folder = self.run_dir(run_id)
+            split = read_json(folder / "inputs" / "split.json")
+            if not split.get("final_test"):
+                raise WorkbenchError("NO_FINAL_TEST", "Legacy/opt-out experiment has no reserved final test; create a new experiment")
+            contract = self._validate_inputs(record)["contract"]
+            key = digest({field: contract[field] for field in ("dataset_sha256", "target", "task")} |
+                         {"final_rows": sorted(split["final_test"])})
+            selection = self.root / "final-selections" / (key + ".json")
+            if selection.exists() and read_json(selection)["run_id"] != run_id:
+                raise WorkbenchError("FINAL_TEST_ALREADY_SELECTED", "This final-test partition is committed to another model; do not select models using final-test scores")
+            if not selection.exists():
+                selection.parent.mkdir(exist_ok=True)
+                atomic_json(selection, {"run_id": run_id, "selected_at": time.time(), "partition_key": key})
+            if record.get("final_hash"):
+                result = self._validate_final(record)
+            else:
+                import importlib.util
+                module = importlib.util.spec_from_file_location("mlwb_final_recipe", folder / "inputs" / "engine.py")
+                recipe = importlib.util.module_from_spec(module)
+                sys.modules[module.name] = recipe
+                # Loading the immutable recipe must not add __pycache__ to its snapshot.
+                exec(compile((folder / "inputs" / "engine.py").read_bytes(), str(folder / "inputs" / "engine.py"), "exec"), recipe.__dict__)
+                temporary = self.root / "staging" / uuid.uuid4().hex
+                try:
+                    result = recipe.evaluate_final(folder / "inputs", folder / "output" / "model", temporary)
+                    result.update(run_id=run_id, partition_key=key,
+                                  note="Model selection was committed before evaluation. This local workflow guard is not access control over the source CSV.")
+                    atomic_json(temporary / "result.json", result)
+                    if (folder / "final-test").exists():
+                        # Recover a crash after artifact commit but before the ledger anchor.
+                        if tree_hashes(folder / "final-test") != tree_hashes(temporary):
+                            raise WorkbenchError("INTEGRITY_MISMATCH", "Uncommitted final-test output differs from recomputation")
+                    else:
+                        temporary.rename(folder / "final-test")
+                    for name, value in result["metrics"].items():
+                        self.client.log_metric(run_id, "final_test." + name, value)
+                    self.client.log_artifacts(run_id, str(folder / "final-test"), "final-test")
+                    record["final_hash"] = digest(tree_hashes(folder / "final-test"))
+                    self.store.save(record)
+                finally:
+                    if temporary.exists():
+                        shutil.rmtree(temporary)
+            return {"run_id": run_id, "state": record["state"], "final_test": result}
 
     def list(self, limit: int = 20, offset: int = 0, state: str | None = None,
              model: str | None = None, parent_run_id: str | None = None) -> dict:
@@ -385,6 +472,7 @@ class Workbench:
             self._validate_inputs(parent)
             inputs = self.run_dir(run_id) / "inputs"
             config = read_json(inputs / "config.json")
+            config.setdefault("final_test_fraction", 0.0)  # Legacy partitions must not change on branch.
             config["name"] = config["name"] + " branch"
             config["dataset_path"] = str(inputs / "dataset.csv")
             for field in ("preprocessor_path", "estimator_path"):
@@ -421,23 +509,29 @@ class Workbench:
             record = self._get_locked(run_id)
             result = self._validate_outputs(record)
             folder = self.run_dir(run_id)
+            if record.get("final_hash"):
+                result["final_test"] = self._validate_final(record)
             staging = self.root / "staging" / uuid.uuid4().hex
             staging.mkdir(parents=True)
             try:
                 shutil.copytree(folder / "inputs", staging / "inputs",
                                 ignore=None if include_data else shutil.ignore_patterns("dataset.csv"))
                 shutil.copytree(folder / "output", staging / "output")
+                if "final_test" in result:
+                    shutil.copytree(folder / "final-test", staging / "final-test")
                 shutil.copyfile(Path(__file__).with_name("reproduce.py"), staging / "reproduce.py")
                 atomic_json(staging / "experiment.json", {"format": 1, "run_id": run_id,
                     "parent_run_id": record["parent_run_id"], "comparison_key": record["comparison_key"],
                     "preprocessing_hash": record["preprocessing_hash"], "metrics": result["metrics"],
-                    "data_included": include_data, "version": __version__})
+                    "final_test": result.get("final_test"), "data_included": include_data, "version": __version__})
                 report = [f"# Experiment {run_id}", "", f"Model: {record['model']}",
                           f"Parent: {record['parent_run_id']}", f"Evaluation key: {record['comparison_key']}", "",
                           *[f"- {key}: {value:.12g}" for key, value in result["metrics"].items()], "",
                           "Install inputs/requirements.txt, then run python reproduce.py --verify-only.",
                           "Run python reproduce.py to retrain; pass --data ORIGINAL.csv if data is excluded.",
                           "Only load models and execute factories from a trusted export.", ""]
+                report += ["## Independent final test", "", canonical(result.get("final_test")) if "final_test" in result else
+                           "Not evaluated. Validation scores must not be described as independent final-test scores.", ""]
                 (staging / "REPORT.md").write_text("\n".join(report), encoding="utf-8")
                 from .reporting import html_report
                 (staging / "REPORT.html").write_text(html_report(record, result,
@@ -453,7 +547,7 @@ class Workbench:
                             zip_file.write(file, file.relative_to(staging).as_posix())
                 temporary.rename(archive)
                 return {"run_id": run_id, "path": str(archive), "sha256": sha256(archive),
-                        "data_included": include_data, "metrics": result["metrics"],
+                        "data_included": include_data, "metrics": result["metrics"], "final_test": result.get("final_test"),
                         "reproduce": "python reproduce.py" + ("" if include_data else " --data ORIGINAL.csv")}
             finally:
                 shutil.rmtree(staging)

@@ -1,0 +1,67 @@
+{
+  "version": "0.4.0",
+  "installed_wheel_import": true,
+  "isolated_virtualenv": true,
+  "doctor_checks": [
+    {
+      "name": "backend_dependencies",
+      "ok": true,
+      "detail": {
+        "mlflow": "3.18.0",
+        "optuna": "5.0.0",
+        "scikit-learn": "1.9.1",
+        "pandas": "2.3.3",
+        "pydantic": "2.14.3",
+        "psutil": "7.2.2",
+        "filelock": "3.32.7"
+      }
+    },
+    {
+      "name": "storage",
+      "ok": true,
+      "detail": "SQLite write, commit and atomic rename succeeded"
+    },
+    {
+      "name": "node",
+      "ok": true,
+      "detail": "v24.18.0"
+    }
+  ],
+  "classification_retraining": {
+    "verified_files": 21,
+    "metrics_match": true,
+    "final_test_metrics_match": true,
+    "recorded": {
+      "accuracy": 0.375,
+      "balanced_accuracy": 0.375,
+      "f1_macro": 0.3739130434782609,
+      "log_loss": 0.6936465828037841,
+      "roc_auc": 0.4305555555555556,
+      "average_precision": 0.5751174812030075
+    },
+    "reproduced": {
+      "accuracy": 0.375,
+      "balanced_accuracy": 0.375,
+      "f1_macro": 0.3739130434782609,
+      "log_loss": 0.6936465828037841,
+      "roc_auc": 0.4305555555555556,
+      "average_precision": 0.5751174812030075
+    }
+  },
+  "regression_retraining": {
+    "verified_files": 21,
+    "metrics_match": true,
+    "final_test_metrics_match": true,
+    "recorded": {
+      "rmse": 0.14051075233751453,
+      "mae": 0.12254367182813271,
+      "r2": 0.9997336149845722
+    },
+    "reproduced": {
+      "rmse": 0.14051075233751453,
+      "mae": 0.12254367182813271,
+      "r2": 0.9997336149845722
+    }
+  },
+  "validation_and_final_test_reproduced": true
+}

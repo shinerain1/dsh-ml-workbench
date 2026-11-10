@@ -1,14 +1,14 @@
 # Architecture and guarantees
 
-Version 0.3 adds [DSH Session integration](DSH-INTEGRATION.md): a host-supplied invocation envelope, Session links in the lifecycle ledger, automatic keys for exact invocation replay, and a bounded resume tool. This extends the MLflow/Optuna workflow without replacing DSH's agent loop. Native tool policy and cancellation apply before dispatch; Python remains host-local.
+Version 0.4 extends [DSH Session integration](DSH-INTEGRATION.md) with combined run, bounded wait, independent final-test evaluation and an optional DSH-confined backend. Session identity, invocation replay and guarded PTC calls remain owned by DSH. The adapter does not replace the agent loop.
 
 ```mermaid
 flowchart LR
-    A[DSH agent] --> B[Sixteen native DSH tools]
+    A[DSH agent / PTC] --> B[Twenty DSH tools]
     B --> C[Python JSON control process]
     C --> D[MLflow tracking and artifacts]
     C --> E[Local lifecycle ledger and snapshots]
-    C --> F[Detached training worker]
+    C --> F[Deadline supervisor and training child]
     F --> G[scikit-learn Pipeline]
     G --> D
     E --> H[Verified standalone ZIP]
@@ -17,7 +17,7 @@ flowchart LR
     I --> E
 ```
 
-The TypeScript plugin registers tools through the DSH SDK. Each call starts a short Python control process with an argument array, never a command shell. Standard input/output carries one versioned JSON message. Standard error carries diagnostics. Abort/timeout terminates that control request; an explicitly started worker has an independent lifetime. `cancel` is the operation that stops training.
+Each call starts a short Python control process with an argument array and versioned JSON over stdin/stdout; stderr carries diagnostics. Local mode detaches supervisors. DSH mode confines control calls and separately owned supervisors using the current Session policy and DSH-managed process ranges. Call cancellation stops control requests; cancel stops a fit, and DSH-mode plugin disposal also terminates its owned worker ranges. A supervisor enforces each persisted deadline without Agent polling. A training child monitors the supervisor's PID and creation time to avoid becoming an orphan.
 
 The backend uses a filesystem lock across controllers and workers. A SQLite lifecycle ledger stores state, events, ownership and request keys. MLflow owns experiment IDs, run IDs, parameters, metric history and artifacts. A created snapshot has MLflow status RUNNING but precise lifecycle tag `mlwb.state=created`. Successful runs are FINISHED; cancellation is KILLED; failure/interruption is FAILED.
 

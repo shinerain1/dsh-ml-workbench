@@ -18,12 +18,14 @@ from dsh_ml_workbench.spec import (
     RunRequest,
     SearchCreateRequest,
     SearchRequest,
+    WaitRequest,
 )
 
 root = Path(__file__).resolve().parents[1]
 create = CreateRequest.model_json_schema()
-schemas = {"rpc": RpcRequest.model_json_schema(), "create": create}
-for operation, model in {"resume": ResumeRequest, "start": RunRequest, "get": RunRequest, "cancel": RunRequest,
+schemas = {"rpc": RpcRequest.model_json_schema(), "create": create, "run": create}
+for operation, model in {"resume": ResumeRequest, "start": RunRequest, "wait": WaitRequest, "finalize": RunRequest,
+                         "get": RunRequest, "cancel": RunRequest,
                          "list": ListRequest, "branch": BranchRequest, "compare": CompareRequest,
                          "export": ExportRequest, "inspect": InspectRequest, "diff": DiffRequest,
                          "predict": PredictRequest, "search_create": SearchCreateRequest,

@@ -50,13 +50,14 @@ class Store:
             raise WorkbenchError("RUN_NOT_FOUND", "Experiment was not found in this workbench root")
         return json.loads(row[0])
 
-    def save(self, record: dict, *, request_key: str | None = None, payload_hash: str = "") -> None:
+    def save(self, record: dict, *, request_key: str | None = None, payload_hash: str = "", emit_event: bool = True) -> None:
         record["updated_at"] = time.time()
         with self.connect() as db:
             db.execute("INSERT INTO runs VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET record=excluded.record",
                        (record["run_id"], canonical(record)))
-            db.execute("INSERT INTO events(run_id,time,state) VALUES (?,?,?)",
-                       (record["run_id"], record["updated_at"], record["state"]))
+            if emit_event:
+                db.execute("INSERT INTO events(run_id,time,state) VALUES (?,?,?)",
+                           (record["run_id"], record["updated_at"], record["state"]))
             if request_key is not None:
                 db.execute("INSERT INTO requests VALUES (?,?,?)", (request_key, payload_hash, record["run_id"]))
             if record.get("dsh_context"):

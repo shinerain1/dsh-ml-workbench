@@ -36,7 +36,9 @@ def test_group_and_time_boundaries_with_ties():
     assert set(frame.customer.iloc[groups["train"]]).isdisjoint(frame.customer.iloc[groups["test"]])
     times, _ = make_split(frame, ExperimentSpec(**base, split=SplitSpec(strategy="time", column="when")))
     assert max(frame.when.iloc[times["train"]]) < min(frame.when.iloc[times["test"]])
-    assert set(times["train"]) | set(times["test"]) == set(range(len(frame)))
+    assert set(times["train"]) | set(times["test"]) | set(times["final_test"]) == set(range(len(frame)))
+    assert max(frame.when.iloc[times["test"]]) < min(frame.when.iloc[times["final_test"]])
+    assert set(frame.customer.iloc[groups["final_test"]]).isdisjoint(frame.customer.iloc[groups["train"] + groups["test"]])
     frame.loc[times["test"], "target"] = 2
     with pytest.raises(WorkbenchError, match="every target class"):
         make_split(frame, ExperimentSpec(**base, split=SplitSpec(strategy="time", column="when")))
@@ -112,8 +114,8 @@ def test_optuna_crash_recovery_and_cancel(tmp_path, regression_csv, monkeypatch)
                   search_space={"alpha": {"type": "float", "low": 0.1, "high": 1.0}})
     created = workbench.search_create(**config)
     actual_start = workbench.start
-    def crash_after_start(run_id):
-        actual_start(run_id)
+    def crash_after_start(run_id, **kwargs):
+        actual_start(run_id, **kwargs)
         raise RuntimeError("simulated lost control response")
     monkeypatch.setattr(workbench, "start", crash_after_start)
     with pytest.raises(RuntimeError, match="lost control"):

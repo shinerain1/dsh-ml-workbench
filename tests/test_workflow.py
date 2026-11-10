@@ -16,7 +16,7 @@ def create(workbench, data, **kwargs):
     return workbench.create(ExperimentSpec(dataset_path=str(data), target="target", task="classification", **kwargs))
 
 
-def test_classification_branch_model_consistency_and_standalone_delivery(tmp_path, classification_csv):
+def test_classification_branch_model_consistency_and_standalone_delivery(tmp_path, classification_csv, monkeypatch):
     workbench = Workbench(tmp_path / "workbench")
     parent = create(workbench, classification_csv, model="random_forest", params={"n_estimators": 12})
     workbench.start(parent["run_id"])
@@ -46,6 +46,25 @@ def test_classification_branch_model_consistency_and_standalone_delivery(tmp_pat
     assert tracked.data.metrics["accuracy"] == child_done["metrics"]["accuracy"]
     artifact_names = {item.path for item in workbench.client.list_artifacts(child["run_id"], "output")}
     assert "output/model" in artifact_names
+    assert "final_test" not in child_done
+    with monkeypatch.context() as patch:
+        def fail_final_artifacts(*args, **kwargs):
+            raise RuntimeError("simulated final artifact commit failure")
+        patch.setattr(workbench.client, "log_artifacts", fail_final_artifacts)
+        with pytest.raises(RuntimeError, match="simulated final artifact"):
+            workbench.finalize(child["run_id"])
+    pending_predictions = child_dir / "final-test" / "predictions.csv"
+    original_predictions = pending_predictions.read_bytes()
+    pending_predictions.write_bytes(original_predictions + b"corrupt\n")
+    with pytest.raises(WorkbenchError, match="Uncommitted final-test output differs"):
+        workbench.finalize(child["run_id"])
+    pending_predictions.write_bytes(original_predictions)
+    final = workbench.finalize(child["run_id"])
+    assert final["final_test"]["rows"] == len(split["final_test"])
+    assert workbench.finalize(child["run_id"]) == final
+    with pytest.raises(WorkbenchError) as caught:
+        workbench.finalize(parent["run_id"])
+    assert caught.value.code == "FINAL_TEST_ALREADY_SELECTED"
     delivery = workbench.export(child["run_id"], include_data=True)
     unpacked = tmp_path / "delivery"
     with zipfile.ZipFile(delivery["path"]) as archive:
@@ -57,9 +76,14 @@ def test_classification_branch_model_consistency_and_standalone_delivery(tmp_pat
                              capture_output=True, text=True, timeout=90)
     assert repeated.returncode == 0, repeated.stdout + repeated.stderr
     assert json.loads(repeated.stdout.splitlines()[-1])["metrics_match"]
+    assert json.loads(repeated.stdout.splitlines()[-1])["final_test_metrics_match"] is True
     private_delivery = workbench.export(child["run_id"])
     with zipfile.ZipFile(private_delivery["path"]) as archive:
         assert "inputs/dataset.csv" not in archive.namelist()
+    final_file = child_dir / "final-test" / "predictions.csv"
+    final_file.write_text("changed", encoding="utf-8")
+    with pytest.raises(WorkbenchError, match="Final-test artifacts changed"):
+        workbench.export(child["run_id"])
 
 
 def test_regression_and_incompatible_evaluation_are_not_ranked(tmp_path, regression_csv):

@@ -13,7 +13,7 @@ This project is a local DSH integration of mature libraries. Version 0.3.0 adds 
 
 The first improvement priority was evaluation and failure behavior, not matching a large project's feature count. A repeated customer cannot cross the configured group boundary. Equal timestamps cannot straddle a chronological boundary. A failed MLflow terminal write cannot leave a persisted successful lifecycle claim. A restarted Optuna controller cannot silently launch the same linked fit again.
 
-The [comparison report](BENCHMARK.md) includes unfavorable findings: the initial plugin pilot made 36 tool calls versus 22 for the direct workflow, with two parameter errors subsequently fixed. Both completed without extra user answers. Further priorities are bounded polling/batching through DSH PTC, explicitly preregistered retraining criteria, repeated/counterbalanced trials, and a supported confined backend provider. Python execution is still host-local, not inherited from the DSH shell sandbox.
+The [comparison report](BENCHMARK.md) includes unfavorable findings: the initial plugin pilot made 36 tool calls versus 22 for the direct workflow, with two parameter errors subsequently fixed. Both completed without extra user answers. Version 0.4 implements bounded waiting, run composition, a real DSH confined backend mode, independent final-test selection and background fit deadlines. Its provider test demonstrates one outer PTC call for a complete small workflow; this is not a repeated live-model productivity trial. Preregistered repeated/counterbalanced Agent trials and production hardening remain outstanding. See [v0.4 evidence](VALIDATION-v0.4.md).
 
 Official sources reviewed for the gap analysis:
 

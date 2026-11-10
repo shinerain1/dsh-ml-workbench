@@ -17,6 +17,8 @@ def html_report(record: dict, result: dict, dataset: dict) -> str:
         confusion = "<h2>Confusion matrix</h2><p>Rows: actual. Columns: predicted.</p>" + table(
             ["Actual / predicted", *classes], [[label, *row] for label, row in zip(classes, result["confusion_matrix"], strict=True)])
     split = dataset.get("split", {"strategy": "random (legacy run)"})
+    final = result.get("final_test")
+    final_html = table(["Final-test metric", "Selected model"], list(final["metrics"].items())) if final else "<p>Not evaluated.</p>"
     return f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>Experiment {escape(record['name'])}</title><style>
 body{{font:16px/1.6 system-ui,sans-serif;color:#172b3a;background:#f5f8fa;max-width:980px;margin:40px auto;padding:0 24px}}
@@ -24,7 +26,7 @@ h1,h2{{color:#135a54}}table{{border-collapse:collapse;background:white;width:100
 th,td{{text-align:left;border-bottom:1px solid #d8e2e7;padding:10px}}code{{overflow-wrap:anywhere}}.note{{padding:16px;background:#e8f3ef}}
 </style><h1>{escape(record['name'])}</h1><p>Model: <b>{escape(record['model'])}</b> · Task: {escape(record['task'])}</p>
 <p>Run: <code>{escape(record['run_id'])}</code></p><p>Parent: <code>{escape(str(record['parent_run_id']))}</code></p>
-<h2>Validation metrics</h2>{metrics}{confusion}<h2>Evaluation boundary</h2>
+<h2>Validation metrics</h2>{metrics}{confusion}<h2>Independent final test</h2>{final_html}<h2>Evaluation boundary</h2>
 {table(['Property', 'Value'], list(split.items()))}<p>Data SHA-256: <code>{escape(dataset['sha256'])}</code></p>
 <p>Evaluation key: <code>{escape(record['comparison_key'])}</code></p>
 <p>Fit time: {result['train_seconds']:.6f} seconds (one local measurement).</p>

@@ -1,4 +1,4 @@
-include README.md README.zh.md LICENSE requirements.lock
+include README.md README.zh.md LICENSE requirements.lock package.json
 recursive-include docs *.md *.json
 recursive-include examples *.py
 recursive-include tests *.py

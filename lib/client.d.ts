@@ -16,6 +16,10 @@ export interface ClientConfig {
     requestTimeoutMs: number;
     maxResponseBytes: number;
 }
+export interface RpcTransport {
+    request(argv: string[], input: string, signal: AbortSignal): Promise<string>;
+    launch(runId: string, token: string, signal: AbortSignal): Promise<void>;
+}
 /** Owns only short control processes; persisted training workers outlive it. */
 export declare class BackendClient {
     private readonly config;
@@ -23,7 +27,7 @@ export declare class BackendClient {
     private readonly active;
     constructor(config: ClientConfig);
     /** Send one versioned request, preserving caller cancellation and byte limits. */
-    call(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation): Promise<JsonObject>;
+    call(operation: string, args: unknown, signal: AbortSignal, dshContext?: DshInvocation, transport?: RpcTransport): Promise<JsonObject>;
     /** Abort control processes and wait until their handles have closed. */
     dispose(): Promise<void>;
     private request;

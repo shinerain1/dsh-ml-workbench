@@ -1,6 +1,6 @@
 # DSH integration and recovery
 
-Version 0.3.0 uses DSH's `defineTool` registry, immutable `ToolExecution` identity, Session identity, shared policy pipeline, cancellation signal and PTC schema generation. MLflow still owns tracking/models, Optuna owns study sampling/storage, and DSH owns reasoning and code generation. No agent-loop replacement, private prompt interception or second conversational memory is introduced.
+Version 0.4.0 uses DSH's `defineTool` registry, immutable `ToolExecution` identity, Session identity, shared policy pipeline, cancellation signal and PTC schema generation. MLflow still owns tracking/models, Optuna owns study sampling/storage, and DSH owns reasoning and code generation. No agent-loop replacement, private prompt interception or second conversational memory is introduced.
 
 ## Session-aware operations
 
@@ -20,7 +20,7 @@ The local SQLite ledger and MLflow are separate stores. A crash before ledger co
 
 ## Native and PTC
 
-Native mode exposes 17 tools. Output schemas declare run/study handles, states and resume references so DSH's generated PTC SDK can use canonical JSON fields without parsing rendered text. A PTC program can create a run with a stable key, start it, and return its ID in one model step. Poll in later bounded steps; do not keep one program open for the whole fit.
+Native mode exposes 20 tools. Output schemas declare run/study handles, states and resume references so DSH's generated PTC SDK can use canonical JSON fields without parsing rendered text. The run tool combines create/start, and wait performs bounded polling inside a control request. See [bounded PTC programs](PTC-WORKFLOW.md). Native rendering omits verbose event histories and classification tables; PTC keeps the full canonical object.
 
 ```typescript
 const run = await tools.ml_experiment_create({
@@ -34,8 +34,13 @@ return { run_id: started.run_id, state: started.state };
 
 ## Policy and lifetime boundaries
 
-Calls enter DSH's ordinary execution pipeline. A `tools.guard()` denial or pre-aborted `exec.signal` prevents backend execution. Plugin unload aborts control requests and unregisters tools. Detached training is deliberately durable and survives the Session; use `ml_experiment_cancel` to stop it. It is not a DSH job owned by the disposed Agent, because that lifecycle would cancel the intended persistent fit.
+Calls enter DSH's ordinary guarded pipeline. Pre-aborted requests do not spawn. Both backend and plugin must match version 0.4.0; requests carry an expected backend version.
 
-Python still runs on the local host. Passing through DSH's tool policy does **not** place Python or custom factories inside DSH's shell/PTC OS sandbox. This adapter does not support remote SSH execution or hostile/multi-user workloads. Custom Python remains opt-in through `allowCustomCode`. Native/Python package versions must both be 0.3.0 or later for the new envelope and resume tool.
+- `executionMode: local` preserves compatibility with existing configurations. Short control processes are owned by the plugin; training supervisors are detached and survive DSH shutdown. Ambient credential-shaped and DSH_* environment variables are stripped.
+- `executionMode: dsh` resolves the calling Session's current policy through `ctx.sandboxPolicy.resolve`, wraps both RPC and supervisor argv with `ctx.sandbox.confine`, and uses `ctx.subprocess.spawn` with managed process-range termination. No local fallback or automatic writable-root grant exists. A policy explicitly set to danger-full-access remains unconfined, matching DSH's authority; the plugin never silently upgrades it. Windows currently reports partial filesystem enforcement. This is not network/read isolation or remote SSH support.
+- RPC requests cannot detach children in DSH mode: they return launch descriptors to the adapter, which starts separately owned supervisors. Atomic token/state claims prevent duplicate fits even if a pending launch is replayed. Missing launches reconcile as interrupted after startup grace. Plugin/DSH shutdown terminates owned worker ranges; completed snapshots remain, and an interrupted fit is restarted by branching. A Session close alone does not dispose this globally mounted plugin.
+- Each new fit persists a deadline and gets an independent supervisor. Training children monitor supervisor identity to avoid surviving a supervisor crash. Model-weight checkpoint resumption is not implemented. A shutdown of the entire machine cannot preserve a running process.
+
+The installation helper selects DSH mode with a workspace-local root. The schema default remains local for compatibility. This is a local, single-user backend for trusted code/models. Policy is resolved per control request and worker launch; changing Session policy later does not retroactively rewrite a running supervisor's OS grants. Cancel running fits before changing their intended permissions.
 
 Sources: [DSH tool authoring](https://github.com/deepseek-ai/deepseek-harness/blob/8bd073392eef6f54e921a093b95076248eb08cbb/docs/cookbook/adding-a-tool.md), [execution identity](https://github.com/deepseek-ai/deepseek-harness/blob/8bd073392eef6f54e921a093b95076248eb08cbb/packages/core/tools/src/contracts.ts), [PTC executor](https://github.com/deepseek-ai/deepseek-harness/blob/8bd073392eef6f54e921a093b95076248eb08cbb/packages/core/tool-executor-ptc/README.md).

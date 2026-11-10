@@ -1,0 +1,82 @@
+{
+  "kind": "real-dsh-ptc-sandbox",
+  "model_calls": 0,
+  "outer_calls_for_workflow": 1,
+  "nested_calls_for_workflow": 7,
+  "execution_mode": "dsh",
+  "workspace_policy": "workspace-write",
+  "platform": "win32",
+  "completed": {
+    "logs": [],
+    "sandbox": {
+      "mode": "workspace-write",
+      "denied": false,
+      "enforcement": "partial"
+    },
+    "result": {
+      "run_ids": [
+        "c081ff910495486e880939090cc11a7f",
+        "ab3b778659a44fa3a79abc994cdf0b4f"
+      ],
+      "selected": "c081ff910495486e880939090cc11a7f",
+      "validation": [
+        0.375,
+        0.3333333333333333
+      ],
+      "final_test": {
+        "accuracy": 0.5,
+        "balanced_accuracy": 0.5,
+        "f1_macro": 0.49650349650349646,
+        "log_loss": 0.6930465880087824,
+        "roc_auc": 0.4930555555555556,
+        "average_precision": 0.5467451121862886
+      },
+      "delivery": "<temporary-workspace>\\records\\exports\\c081ff910495486e880939090cc11a7f-6afd785b.zip"
+    }
+  },
+  "replayed": {
+    "logs": [],
+    "sandbox": {
+      "mode": "workspace-write",
+      "denied": false,
+      "enforcement": "partial"
+    },
+    "result": {
+      "run_ids": [
+        "c081ff910495486e880939090cc11a7f",
+        "ab3b778659a44fa3a79abc994cdf0b4f"
+      ],
+      "selected": "c081ff910495486e880939090cc11a7f",
+      "validation": [
+        0.375,
+        0.3333333333333333
+      ],
+      "final_test": {
+        "accuracy": 0.5,
+        "average_precision": 0.5467451121862886,
+        "balanced_accuracy": 0.5,
+        "f1_macro": 0.49650349650349646,
+        "log_loss": 0.6930465880087824,
+        "roc_auc": 0.4930555555555556
+      },
+      "delivery": "<temporary-workspace>\\records\\exports\\c081ff910495486e880939090cc11a7f-e1c3396b.zip"
+    }
+  },
+  "outside_write_denied": true,
+  "denied": {
+    "logs": [],
+    "sandbox": {
+      "mode": "workspace-write",
+      "denied": false,
+      "enforcement": "partial"
+    },
+    "result": {
+      "state": "failed",
+      "denied": true
+    }
+  },
+  "shutdown": {
+    "state": "interrupted",
+    "child_alive": false
+  }
+}

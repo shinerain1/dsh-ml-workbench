@@ -9,6 +9,7 @@ export interface Config {
     allowCustomCode: boolean;
     requestTimeoutMs: number;
     maxResponseBytes: number;
+    executionMode: 'local' | 'dsh';
 }
 export declare const Config: z<Config>;
 /** Register reversible tools on the DSH tool service and own control-process cleanup. */

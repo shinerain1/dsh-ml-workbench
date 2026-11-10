@@ -5,6 +5,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool, type ParameterSchemaSpec, type ObjectValueSchemaSpec } from '@deepseek-ai/dsh-tools'
 import { BackendClient } from './client.js'
+import { ConfinedBackend } from './confined.js'
 
 export const name = 'ml-workbench'
 export const inject = ['tools']
@@ -16,6 +17,7 @@ export interface Config {
   allowCustomCode: boolean
   requestTimeoutMs: number
   maxResponseBytes: number
+  executionMode: 'local' | 'dsh'
 }
 
 export const Config: z<Config> = z.object({
@@ -24,6 +26,7 @@ export const Config: z<Config> = z.object({
   allowCustomCode: z.boolean().default(false).description('Allow reviewed local Python preprocessing and estimator factories'),
   requestTimeoutMs: z.number().min(1000).max(2147483647).default(120000),
   maxResponseBytes: z.number().min(1024).max(16777216).default(4194304),
+  executionMode: z.union(['local', 'dsh'] as const).default('local').description('local: durable host workers. dsh: current DSH file policy and owned process ranges; no fallback, workers stop on plugin/DSH shutdown.'),
 })
 
 const runId = { type: 'string', required: true, description: 'MLflow run ID returned by create or branch' } as const
@@ -50,7 +53,9 @@ const tools: readonly { operation: string; name: string; description: string; pa
       target: { type: 'string', required: true }, task: { type: 'string', required: true, enum: ['classification', 'regression'] },
       name: { type: 'string' }, experiment_name: { type: 'string' }, model: { type: 'string', enum: models },
       params: { type: 'object', additionalProperties: true, description: 'scikit-learn estimator arguments. seed controls randomness and n_jobs is fixed at 1; redundant random_state matching seed and n_jobs=1 are accepted and normalized. Conflicts are rejected.' },
-      preprocessing, seed: { type: 'integer' }, test_fraction: { type: 'number' },
+      preprocessing, seed: { type: 'integer' }, test_fraction: { type: 'number', description: 'Validation fraction of all rows, default 0.2 (legacy field name)' },
+      final_test_fraction: { type: 'number', description: 'Reserved final-test fraction, default 0.2; zero explicitly opts out. Finalize only after model selection.' },
+      timeout_seconds: { type: 'integer', description: '5-86400, default 3600. Background wall-clock deadline includes worker startup; independent of Agent polling.' },
       split: { type: 'object', additionalProperties: false, properties: {
         strategy: { type: 'string', enum: ['random', 'group', 'time'] },
         column: { type: 'string', description: 'Required for group/time. Excluded from model features. Time requires ISO date/time strings.' },
@@ -60,7 +65,9 @@ const tools: readonly { operation: string; name: string; description: string; pa
       request_key: requestKey,
     } },
   { operation: 'start', name: 'ml_experiment_start',
-    description: 'Start one detached training worker. Repeated calls return the same run and never launch it twice. Query get until terminal. Closing the DSH session leaves training running.', parameters: { run_id: runId } },
+    description: 'Start one training worker idempotently. Use wait for bounded waiting. Local mode survives DSH shutdown; dsh mode uses its policy and stops workers on plugin/DSH shutdown.', parameters: { run_id: runId } },
+  { operation: 'wait', name: 'ml_experiment_wait', description: 'Wait up to 60 seconds in one tool call, then return current state and verified metrics. Does not start or restart training. Use this in a bounded PTC loop to reduce model round trips.', parameters: { run_id: runId, wait_seconds: { type: 'integer', description: '0-60, default 30. Keep below requestTimeoutMs.' } } },
+  { operation: 'finalize', name: 'ml_experiment_finalize', description: 'After selecting ONE model using validation only, commit selection and evaluate its untouched final-test partition. A different model cannot reuse that final partition in this workbench. Same-run retries return the same verified scores. Does not retrain; never use for ranking candidates.', parameters: { run_id: runId } },
   { operation: 'get', name: 'ml_experiment_get',
     description: 'Read durable state, lifecycle events, bounded log tail and verified metrics. Missing workers become interrupted. A failed/interrupted fit must be restarted as a new branch; weights are not resumed.', parameters: { run_id: runId } },
   { operation: 'list', name: 'ml_experiment_list',
@@ -96,7 +103,7 @@ const tools: readonly { operation: string; name: string; description: string; pa
       search_space: { type: 'object', required: true, additionalProperties: true },
       n_trials: { type: 'integer', description: 'Total budget 1-100; default 10' }, metric: { type: 'string' },
       seed: { type: 'integer' }, reuse_preprocessing: { type: 'boolean', description: 'Default false refits on the same training rows; true requires a successful parent' },
-      trial_timeout_seconds: { type: 'integer', description: '5-86400, default 600. Enforced when step/get polls, not by a background timer.' },
+      trial_timeout_seconds: { type: 'integer', description: '5-86400, default 600. New trials enforce this in a background supervisor even without polling.' },
     } },
   { operation: 'search_step', name: 'ml_search_step',
     description: 'Reconcile an Optuna study and start at most one trial; nonblocking and safe to retry. Poll step until complete/cancelled to advance the whole search. After DSH restart the same study_name resumes, with no duplicate active fit. Best validation score is not an independent final-test score.',
@@ -109,10 +116,14 @@ const tools: readonly { operation: string; name: string; description: string; pa
     parameters: { study_name: { type: 'string', required: true } } },
 ]
 
+const createTool = tools.find(tool => tool.operation === 'create')!
+const registeredTools = [...tools, { ...createTool, operation: 'run', name: 'ml_experiment_run',
+  description: 'Create an immutable experiment and start training in one call. Same inputs as create, including stable request_key for safe PTC reruns. Use wait for completion, compare validation scores, then finalize the selected model once.' }]
+
 /** Typed handles are available to DSH PTC; extra domain fields remain canonical JSON. */
 function outputSchema(operation: string): ObjectValueSchemaSpec & { additionalProperties: true } {
   const schema: ObjectValueSchemaSpec & { additionalProperties: true } = { type: 'object', additionalProperties: true }
-  if (['create', 'branch', 'start', 'get', 'cancel'].includes(operation)) {
+  if (['create', 'run', 'branch', 'start', 'wait', 'finalize', 'get', 'cancel'].includes(operation)) {
     schema.properties = { run_id: runId, state: { type: 'string', required: true } }
   } else if (operation.startsWith('search_')) {
     schema.properties = { study_name: { type: 'string', required: true }, state: { type: 'string', required: true } }
@@ -137,16 +148,32 @@ export function apply(ctx: Context, config: Config): void {
   if (!Number.isInteger(config.requestTimeoutMs) || config.requestTimeoutMs < 1000 || config.requestTimeoutMs > 2147483647) throw new Error('ml-workbench: invalid requestTimeoutMs')
   if (!Number.isInteger(config.maxResponseBytes) || config.maxResponseBytes < 1024 || config.maxResponseBytes > 16777216) throw new Error('ml-workbench: invalid maxResponseBytes')
   const backend = new BackendClient(config)
-  ctx.effect(() => () => backend.dispose())
-  for (const tool of tools) {
+  const confined = new ConfinedBackend(ctx, config)
+  ctx.effect(() => async () => { await backend.dispose(); await confined.dispose() })
+  for (const tool of registeredTools) {
     ctx.tools.register(defineTool({
       name: tool.name, description: tool.description, parameters: tool.parameters,
       output: {
         schema: outputSchema(tool.operation),
-        render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }],
+        render: (_args, value) => {
+          // Native models receive concise progress; PTC retains the complete canonical value.
+          if (value.run_id !== undefined && value.state !== undefined) {
+            const keys = ['run_id', 'state', 'name', 'model', 'parent_run_id', 'metrics', 'final_test', 'train_seconds', 'predict_seconds', 'train_rows', 'test_rows', 'reused_preprocessing', 'model_uri', 'error']
+            const summary = Object.fromEntries(keys.filter(key => value[key] !== undefined).map(key => [key, value[key]]))
+            if (value.state === 'failed' || value.state === 'interrupted') summary.log_tail = value.log_tail
+            return [{ type: 'text', text: JSON.stringify(summary) }]
+          }
+          const { events, log_tail, classification_report, confusion_matrix, ...summary } = value as Record<string, unknown>
+          return [{ type: 'text', text: JSON.stringify({ ...summary, ...(value.state === 'failed' || value.state === 'interrupted' ? { log_tail } : {}) }) }]
+        },
       },
-      execute: (args, exec) => backend.call(tool.operation, args, exec.signal,
-        exec.agent === undefined ? undefined : { session_id: exec.agent.session.id, call_id: exec.callId }),
+      execute: async (args, exec) => {
+        const result = await backend.call(tool.operation, args, exec.signal,
+          exec.agent === undefined ? undefined : { session_id: exec.agent.session.id, call_id: exec.callId },
+          config.executionMode === 'dsh' ? confined.transport(exec.agent?.session) : undefined)
+        return tool.operation === 'health' ? { ...result, adapter_execution_mode: config.executionMode,
+          training_lifetime: config.executionMode === 'dsh' ? 'Stops on plugin/DSH shutdown; current DSH file policy applies' : 'Detached host training survives DSH shutdown' } : result
+      },
       presentCall: args => ({ card: 'generic', title: tool.name, rawInput: args }),
     }))
   }

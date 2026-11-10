@@ -43,12 +43,23 @@ def main() -> int:
         raise ValueError("Data is not included. Pass --data ORIGINAL.csv; its SHA-256 must match")
     command = [sys.executable, "-B", str(folder / "inputs" / "engine.py"), "--inputs", str(folder / "inputs"),
                "--output", str(args.output.resolve()), "--data", str(data)]
+    final_output = args.output.resolve().with_name(args.output.name + "-final-test")
+    if (folder / "final-test" / "result.json").exists():
+        command += ["--final-output", str(final_output)]
     subprocess.run(command, check=True)
     recorded = json.loads((folder / "output" / "result.json").read_text(encoding="utf-8"))["metrics"]
     repeated = json.loads((args.output / "result.json").read_text(encoding="utf-8"))["metrics"]
     matches = recorded.keys() == repeated.keys() and all(
         math.isclose(recorded[key], repeated[key], rel_tol=1e-7, abs_tol=1e-8) for key in recorded)
-    print(json.dumps({**status, "metrics_match": matches, "recorded": recorded, "reproduced": repeated}))
+    final_match = None
+    if (folder / "final-test" / "result.json").exists():
+        expected = json.loads((folder / "final-test" / "result.json").read_text(encoding="utf-8"))["metrics"]
+        actual = json.loads((final_output / "result.json").read_text(encoding="utf-8"))["metrics"]
+        final_match = expected.keys() == actual.keys() and all(
+            math.isclose(expected[key], actual[key], rel_tol=1e-7, abs_tol=1e-8) for key in expected)
+        matches = matches and final_match
+    print(json.dumps({**status, "metrics_match": matches, "final_test_metrics_match": final_match,
+                      "recorded": recorded, "reproduced": repeated}))
     return 0 if matches else 1
 
 

@@ -1,5 +1,6 @@
-"""Train using the actual v0.1.0 source, then branch/compare/export using v0.2.0."""
+"""Train using a released source tag, then branch/compare/export with this backend."""
 
+import argparse
 import json
 import os
 import subprocess
@@ -8,20 +9,27 @@ import time
 from pathlib import Path
 
 import pandas as pd
+from dsh_ml_workbench import __version__
 from dsh_ml_workbench.files import atomic_json, sha256
 from dsh_ml_workbench.service import Workbench
 from sklearn.datasets import make_classification
 
 root = Path(__file__).resolve().parents[1]
-temporary = root / ".verification" / "legacy-upgrade"
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--from-version", default="0.1.0", choices=["0.1.0", "0.2.0", "0.3.0"])
+parser.add_argument("--root", type=Path, default=root / ".verification" / "legacy-upgrade")
+parser.add_argument("--report", type=Path, default=root / "docs" / "upgrade-results.json")
+args = parser.parse_args()
+temporary = args.root.resolve()
 temporary.mkdir(parents=True, exist_ok=False)
 package = temporary / "old-python" / "dsh_ml_workbench"
 package.mkdir(parents=True)
 git = ["git", "-c", f"safe.directory={root.as_posix()}"]
-names = subprocess.check_output([*git, "ls-tree", "-r", "--name-only", "v0.1.0", "python/dsh_ml_workbench/"], cwd=root).decode().splitlines()
+tag = "v" + args.from_version
+names = subprocess.check_output([*git, "ls-tree", "-r", "--name-only", tag, "python/dsh_ml_workbench/"], cwd=root).decode().splitlines()
 for name in names:
     if name.endswith(".py"):
-        (package / Path(name).name).write_bytes(subprocess.check_output([*git, "show", f"v0.1.0:{name}"], cwd=root))
+        (package / Path(name).name).write_bytes(subprocess.check_output([*git, "show", f"{tag}:{name}"], cwd=root))
 x, y = make_classification(n_samples=100, n_features=4, random_state=31)
 data = pd.DataFrame(x, columns=["a", "b", "c", "d"])
 data["target"] = y
@@ -62,7 +70,7 @@ while time.monotonic() < deadline:
 assert completed["state"] == "succeeded", completed
 comparison = workbench.compare([old["run_id"], branch["run_id"]])
 workbench.export(branch["run_id"])
-atomic_json(root / "docs" / "upgrade-results.json", {"from": "0.1.0", "to": "0.2.0",
+atomic_json(args.report, {"from": args.from_version, "to": __version__,
     "legacy_fit": "passed", "branch_with_original_recipe": "passed", "comparison": comparison,
     "legacy_export": "passed"})
 print("Legacy source training, fitted-preprocessor branch, comparison and export passed")

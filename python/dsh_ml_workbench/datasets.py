@@ -56,6 +56,21 @@ def inspect_csv(dataset_path: str, target: str | None = None) -> dict:
 
 
 def make_split(frame: pd.DataFrame, spec: ExperimentSpec) -> tuple[dict, dict]:
+    if spec.final_test_fraction:
+        # Reserve the final holdout first. The second splitter only sees development rows.
+        outer = spec.model_copy(update={"test_fraction": spec.final_test_fraction, "final_test_fraction": 0.0})
+        first, details = make_split(frame, outer)
+        development = frame.iloc[first["train"]].reset_index(drop=True)
+        inner = spec.model_copy(update={"test_fraction": spec.test_fraction / (1 - spec.final_test_fraction),
+                                       "final_test_fraction": 0.0})
+        second, inner_details = make_split(development, inner)
+        split = {key: [first["train"][i] for i in rows] for key, rows in second.items()}
+        split["final_test"] = first["test"]
+        return split, {"strategy": spec.split.strategy, "column": spec.split.column,
+                       "train_rows": len(split["train"]), "test_rows": len(split["test"]),
+                       "final_test_rows": len(split["final_test"]), "development": inner_details,
+                       "final_boundary": details,
+                       "note": "test denotes validation; final_test is evaluated only by finalize after selection"}
     labels = frame[spec.target]
     positions = np.arange(len(frame))
     strategy, column = spec.split.strategy, spec.split.column

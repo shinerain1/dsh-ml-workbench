@@ -193,10 +193,41 @@ def train(inputs: Path, output: Path, data: Path | None = None) -> dict:
     return result
 
 
+def evaluate_final(inputs: Path, model: Path, output: Path, data: Path | None = None) -> dict:
+    """Evaluate a frozen selected model. Never fit or select on these rows."""
+    config = json.loads((inputs / "config.json").read_text(encoding="utf-8"))
+    split = json.loads((inputs / "split.json").read_text(encoding="utf-8"))
+    rows = split.get("final_test")
+    if not rows:
+        raise ValueError("This experiment has no independent final-test partition")
+    dataset = data if data is not None else inputs / "dataset.csv"
+    expected = json.loads((inputs / "dataset.json").read_text(encoding="utf-8"))["sha256"]
+    with dataset.open("rb") as stream:
+        if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
+            raise ValueError("Dataset hash differs from the recorded experiment")
+    frame = pd.read_csv(dataset, low_memory=False).iloc[rows]
+    features = frame.drop(columns=[config["target"], *config["preprocessing"]["drop_columns"]])
+    pipeline = mlflow.sklearn.load_model(str(model))
+    predicted = pipeline.predict(features)
+    classification = config["task"] == "classification"
+    classes = np.asarray(pipeline.classes_) if classification else None
+    probabilities = pipeline.predict_proba(features) if classification and hasattr(pipeline, "predict_proba") else None
+    result = {"role": "final_test", "rows": len(rows),
+              "metrics": evaluate(config["task"], frame[config["target"]], predicted, probabilities, classes)}
+    output.mkdir(parents=True, exist_ok=False)
+    pd.DataFrame({"row_index": rows, "actual": frame[config["target"]].to_numpy(),
+                  "prediction": predicted}).to_csv(output / "predictions.csv", index=False)
+    (output / "result.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    return result
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--inputs", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--data", type=Path)
+    parser.add_argument("--final-output", type=Path)
     options = parser.parse_args()
     train(options.inputs, options.output, options.data)
+    if options.final_output:
+        evaluate_final(options.inputs, options.output / "model", options.final_output, options.data)

@@ -35,6 +35,6 @@ Crash handling:
 
 The TPE sampler is reseeded for each new trial with `(seed + trial_count) mod 2^32`, using the persisted trial history. This makes controller restarts consistent with this adapter's scheduling policy; it is not a claim of bit-for-bit parity with one continuously running `study.optimize` call.
 
-**Timeout semantics:** elapsed fit time is checked when step/get is polled. When DSH is closed, the existing fit continues and no new trial starts. This is not a hard background time limit. Use cancel to stop running work explicitly.
+**Timeout semantics (v0.4):** new trials enforce trial_timeout_seconds through an independent supervisor without polling. Startup counts toward the persisted deadline. Polling also reconciles legacy trials. Local workers survive DSH shutdown; DSH-mode workers stop with their plugin. No next trial starts without step.
 
-The best value is a validation selection result, **not an independent test score**. Repeatedly tuning against the same holdout increases selection bias. Keep a separate final dataset appropriate to the actual customer/time boundary; the plugin does not manufacture that scientific guarantee.
+The best value is a validation selection result, **not an independent test score**. Repeatedly tuning against the same holdout increases selection bias. New experiments reserve a final partition by default; call ml_experiment_finalize only for the selected model. Trials never automatically evaluate it. One model is committed per dataset/target/task/final-row partition in a root. This prevents accidental repeated selection, but does not prevent reading the source CSV or choosing a different root/partition. Correct customer/time boundaries remain essential.

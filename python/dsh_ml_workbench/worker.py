@@ -3,24 +3,41 @@
 import importlib.util
 import os
 import sys
+import threading
+import time
 import traceback
 from pathlib import Path
 
 import psutil
 
 from .files import atomic_json, digest, tree_hashes
-from .service import Workbench
 
 
-def run_worker(root: Path, run_id: str, token: str) -> int:
+def run_worker(root: Path, run_id: str, token: str, parent_pid: int, parent_created: float) -> int:
+    def monitor_parent():
+        while True:
+            try:
+                parent = psutil.Process(parent_pid)
+                if abs(parent.create_time() - parent_created) > 0.01 or not parent.is_running():
+                    raise psutil.NoSuchProcess(parent_pid)
+            except psutil.NoSuchProcess:
+                for child in psutil.Process().children(recursive=True):
+                    try:
+                        child.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+                os._exit(2)
+            time.sleep(0.25)
+    threading.Thread(target=monitor_parent, daemon=True).start()
+    from .service import Workbench
     workbench = Workbench(root, allow_custom_code=True)
     store = workbench.store
     with store.lock:
         record = store.get(run_id)
-        if record.get("launch_token") != token or record["state"] != "starting":
+        if record.get("launch_token") != token or record["state"] != "running" or record.get("pid") != parent_pid:
             return 0
-        record.update(pid=os.getpid(), process_created_at=psutil.Process().create_time())
-        workbench._set_state(record, "running")
+        record.update(training_pid=os.getpid(), training_process_created_at=psutil.Process().create_time())
+        store.save(record, emit_event=False)
     try:
         workbench._validate_inputs(record)
         folder = workbench.run_dir(run_id)
@@ -36,6 +53,8 @@ def run_worker(root: Path, run_id: str, token: str) -> int:
             record = store.get(run_id)
             if record["state"] != "running" or record["launch_token"] != token:
                 return 0
+            if time.time() >= record["deadline_at"]:
+                raise TimeoutError("TRAINING_TIMEOUT: deadline passed before result commit")
             workbench._validate_inputs(record)
             for key, value in result["metrics"].items():
                 workbench.client.log_metric(run_id, key, value)

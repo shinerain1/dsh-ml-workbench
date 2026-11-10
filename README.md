@@ -1,8 +1,8 @@
 # DSH ML Workbench
 
-[中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION-v0.3.md) · [Upstream reuse](docs/UPSTREAM.md)
+[中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION-v0.4.md) · [Upstream reuse](docs/UPSTREAM.md)
 
-A DeepSeek Harness plugin adapting **MLflow, Optuna and scikit-learn** into an agent-accessible experiment workflow. Version 0.3.0 provides 17 tools for CSV inspection, experiments, durable tuning, comparisons, prediction and reproducible delivery. Training algorithms, sampling, model serialization and tracking come from established libraries. See the candid [capability review](docs/MATURITY.md) for the remaining gap to full upstream platforms.
+A DeepSeek Harness plugin adapting **MLflow, Optuna and scikit-learn** into an agent-accessible experiment workflow. Version 0.4.0 provides 20 tools for CSV inspection, experiments, durable tuning, comparisons, prediction and reproducible delivery. Training algorithms, sampling, model serialization and tracking come from established libraries. See the candid [capability review](docs/MATURITY.md) for the remaining gap to full upstream platforms.
 
 Ask DSH to train several repurchase classifiers, then say: “Keep the third experiment's fitted preprocessing, try a faster model, and compare.” The branch gets a new MLflow run, copies the exact fitted transformer, retains the same validation rows and leaves the parent untouched.
 
@@ -14,8 +14,8 @@ Download the Python wheel, `requirements.lock` and plugin `.tgz` from [Releases]
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.3.0-py3-none-any.whl
-dsh plugin --profile desktop add .\dsh-ml-workbench-0.3.0.tgz
+.\.venv\Scripts\python.exe -m pip install -r requirements.lock .\dsh_ml_workbench-0.4.0-py3-none-any.whl
+dsh plugin --profile desktop add .\dsh-ml-workbench-0.4.0.tgz
 ```
 
 Alternatively enable **Custom plugin index** in DSH's experimental plugins, open **Discover**, and add:
@@ -32,22 +32,32 @@ Set the plugin's `pythonExecutable` to the **absolute** venv interpreter path an
 - id: ml-workbench
   config:
     pythonExecutable: C:/ml-workbench/.venv/Scripts/python.exe
-    root: C:/ml-workbench/records
+    root: C:/my-project/.dsh-ml-workbench
+    executionMode: dsh
     allowCustomCode: false
 ```
 
 Call `ml_workbench_health` first. Use the same `root` after restarting DSH to recover runs. On macOS/Linux use `.venv/bin/python`; these platforms have not been verified for this release.
 
+Alternatively run the installation helper from this checkout or an extracted plugin `package` directory:
+
+```powershell
+py -3.12 scripts/install.py --venv C:/ml-workbench/.venv --workspace C:/my-project --wheel C:/downloads/dsh_ml_workbench-0.4.0-py3-none-any.whl
+```
+
+It installs locked dependencies, checks backend/plugin version equality and local SQLite writes, and writes `ml-workbench.config.json` inside the venv. Apply that snippet to the plugin; the helper never overwrites a DSH profile. In `dsh` mode the root must be in the Session workspace or an explicitly approved writable root. No extra grants are added. Run `python -m dsh_ml_workbench doctor --root PATH` independently to diagnose an installation; only an actual DSH tool call verifies OS sandbox access.
+
 ## Workflow
 
 1. `ml_dataset_inspect` reports missing values, types, duplicates and possible identifiers. `ml_experiment_create` then snapshots CSV, code, parameters, environment and validation indices. A `request_key` makes creation retries idempotent.
-2. `ml_experiment_start` starts one detached worker. Poll `ml_experiment_get`; the control call returns before training completes. Closing DSH does not cancel the worker.
+2. `ml_experiment_run` combines create and start; the two original tools remain available. Use `ml_experiment_wait` for bounded waits and [DSH PTC](docs/PTC-WORKFLOW.md) to compose calls. Local workers survive DSH shutdown; DSH-mode workers stop with their owning plugin/process range.
 3. `ml_experiment_list` restores run IDs after a session restart. A dead worker is reported as `interrupted`, never successful.
 4. `ml_experiment_branch` creates a new experiment. By default it reuses a successful parent's exact fitted preprocessing. Set `reuse_preprocessing: false` to change processing or restart a failed fit.
 5. `ml_experiment_diff` explains configuration, code and evaluator changes. `ml_experiment_compare` refuses incompatible conditions. Classification adds ROC-AUC, average precision and log loss when defined; reports include a dummy baseline and confusion matrix.
 6. `ml_search_create/step/get/cancel` adapt persistent Optuna tuning. Each step starts at most one asynchronous trial; repeating calls is safe, and the same study resumes after a DSH restart. [Search contract](docs/TUNING.md).
 7. `ml_model_predict` applies a verified model to another local CSV, checks required features and writes predictions/probabilities plus a manifest.
-8. `ml_experiment_export` verifies snapshots and MLflow metrics before delivering a ZIP with model, code, HTML/Markdown report, environment and standalone reproduction. CSV is omitted unless `include_data: true`.
+8. Select one model using validation only, then call `ml_experiment_finalize` to evaluate its reserved final test. New runs default to 60/20/20 train/validation/final-test partitions (group/time constraints may adjust row counts).
+9. `ml_experiment_export` verifies snapshots and MLflow metrics before delivering a ZIP with model, code, HTML/Markdown report, environment and standalone reproduction. CSV is omitted unless `include_data: true`.
 
 Example creation arguments:
 
@@ -89,9 +99,9 @@ Do not edit tracked metrics or snapshot files: consistency validation will rejec
 
 ## Custom code and scope
 
-DSH can author a scikit-learn transformer factory (`examples/preprocessor.py`) or estimator factory (`examples/estimator.py`). Enable `allowCustomCode` only for reviewed local Python. The plugin runs on the DSH host using Node subprocesses; it does **not** run inside DSH's SSH/process sandbox. Factories execute with the user's permissions and models use Python serialization; load only trusted artifacts. A root is for one local user, not an untrusted multi-tenant server.
+DSH can author a scikit-learn transformer factory (`examples/preprocessor.py`) or estimator factory (`examples/estimator.py`). Enable `allowCustomCode` only for reviewed local Python. `executionMode: dsh` routes control and training through DSH sandbox, sandboxPolicy and subprocess services with no local fallback. `local` preserves durable host execution. Windows DSH reports partial file confinement: this is not a read restriction, network sandbox or hostile-code boundary. Models use Python serialization; load only trusted artifacts. A root is for one local user, not an untrusted multi-tenant server.
 
-The default is an IID holdout, with explicit group/time alternatives. Forecasting, GPU training, nested cross-validation, automatic leakage detection, DVC storage, model serving and RD-Agent orchestration are not implemented. Optuna runs sequentially; DSH must poll step to advance, and timeout is enforced on polling, not by a background daemon. Remove identifiers and post-outcome columns explicitly. Repeated model selection can overfit the holdout; evaluate the final chosen approach independently. Local synthetic results do not establish business value or improved agent productivity.
+The default is an IID holdout, with explicit group/time alternatives. Forecasting, GPU training, nested cross-validation, automatic leakage detection, DVC storage, model serving and RD-Agent orchestration are not implemented. Optuna runs sequentially; DSH must poll step to advance, while each new fit has an independently enforced background deadline. Remove identifiers and post-outcome columns explicitly. Repeated model selection can overfit validation. Finalize the chosen model once on the reserved final partition; the same partition can select only one run in this local root. This is a workflow guard, not access control over the original CSV. Legacy two-way splits remain unchanged; final_test_fraction=0 explicitly opts out. Local synthetic results do not establish business value or improved agent productivity.
 
 ## Development and evidence
 
@@ -106,6 +116,6 @@ npm run check
 .\.venv\Scripts\python.exe scripts/demo-v2.py --root .verification/new-demo-v2 --report docs/v2-results.json
 ```
 
-Use a new demo root each time. [Validation](docs/VALIDATION-v0.3.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.
+Use a new demo root each time. [Validation](docs/VALIDATION-v0.4.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.
 
 Session recovery and exact-call retry identity: [DSH integration](docs/DSH-INTEGRATION.md). Controlled comparison: [experiment report](docs/BENCHMARK.md).

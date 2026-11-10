@@ -83,3 +83,17 @@ Create/branch returns a record with `run_id`, state, model, task, parent ID and 
 Error codes include `INVALID_ARGUMENTS`, `INVALID_DATASET`, `INVALID_TARGET`, `INVALID_FEATURES`, `CUSTOM_CODE_DISABLED`, `IDEMPOTENCY_CONFLICT`, `RUN_NOT_FOUND`, `INTEGRITY_MISMATCH`, `TRACKING_MISMATCH`, `PREPROCESSING_MISMATCH`, `INCOMPARABLE_EXPERIMENTS`, `LAUNCH_FAILED`, `PROCESS_STATE_UNKNOWN` and `CANCEL_PENDING`. Treat other codes as failures and inspect the message. No automatic repeated fit is implied.
 
 New errors include `INVALID_SPLIT`, `FEATURE_SCHEMA_MISMATCH`, `STUDY_NOT_FOUND`, `INCOMPLETE_STUDY`, `INVALID_SEARCH_SPACE`, `UNSUPPORTED_SEARCH` and `LEGACY_EVALUATOR`. A failed or abandoned Optuna trial counts against its budget; a study with all failures has `best:null` even when `state:complete`.
+
+## v0.4 additions and compatibility
+
+| DSH tool | RPC operation | Inputs |
+|---|---|---|
+| ml_experiment_run | run | Same as create; snapshots and starts in one call |
+| ml_experiment_wait | wait | run_id, wait_seconds=30 (0-60) |
+| ml_experiment_finalize | finalize | run_id; commits model choice before final-test evaluation |
+
+Create adds final_test_fraction=0.2 (0 <= value < 0.5) and timeout_seconds=3600 (integer 5-86400). test_fraction remains the validation fraction with its legacy name. Their sum must be below 0.8. Split first reserves the final partition, then splits development data using validation_fraction/(1-final_fraction). Random uses sklearn stratification; group uses fractions of distinct groups; time preserves timestamp ties. Each nonempty partition needs at least two rows. Train must contain all classes. Old snapshots lacking final_test_fraction branch with 0.0, preserving their partition and frozen evaluator; they cannot finalize.
+
+Normal train/search/compare outputs contain validation metrics only. Finalize never refits; it uses the frozen evaluator and fitted model, writes separately hashed final-test artifacts, and logs MLflow metrics under final_test.*. Identical final rows with the same data/target/task are locked to the chosen run even when validation configuration or evaluator differs. A failed final evaluation can be retried only for that chosen run. Export includes final metrics only after finalization, and reproduce.py refits a new estimator and compares both sets separately. Timings are not reproduction equality targets.
+
+expected_backend_version is an optional RPC envelope field; the DSH adapter always supplies 0.4.0. --external-workers is a host adapter option, never a model argument. DSH mode consumes versioned launch descriptors internally; standalone callers should use normal local mode. doctor is a separate CLI command, not an RPC operation. The protocol remains version 1 with additive fields.
