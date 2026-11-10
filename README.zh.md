@@ -1,5 +1,7 @@
 # DSH 机器学习实验工作台
 
+[面向广场用户的安装说明](docs/MARKETPLACE.md) · [功能与实验证据](docs/EVIDENCE.md) · [已备好的投稿材料](market/submission/README.md)
+
 [English](README.md) · [接口说明](docs/API.md) · [实测证据](docs/VALIDATION-v0.4.md) · [成熟项目复用说明](docs/UPSTREAM.md)
 
 这是把 **MLflow + Optuna + scikit-learn 适配到 DeepSeek Harness** 的插件：DSH 负责理解需求、写代码和解释结果，插件负责实验状态与交付。v0.4.0 提供 20 个工具，新增独立最终测试集、后台训练超时、DSH 原生沙箱执行和 PTC 批量流程。[功能成熟度审查](docs/MATURITY.md) 如实列出与大型上游平台的差距。

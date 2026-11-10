@@ -1,5 +1,7 @@
 # DSH ML Workbench
 
+[Installation and scope](docs/MARKETPLACE.md) · [Reviewable evidence](docs/EVIDENCE.md) · [Prepared catalog submission](market/submission/README.md)
+
 [中文说明](README.zh.md) · [API](docs/API.md) · [Validation](docs/VALIDATION-v0.4.md) · [Upstream reuse](docs/UPSTREAM.md)
 
 A DeepSeek Harness plugin adapting **MLflow, Optuna and scikit-learn** into an agent-accessible experiment workflow. Version 0.4.0 provides 20 tools for CSV inspection, experiments, durable tuning, comparisons, prediction and reproducible delivery. Training algorithms, sampling, model serialization and tracking come from established libraries. See the candid [capability review](docs/MATURITY.md) for the remaining gap to full upstream platforms.
