@@ -119,3 +119,5 @@ npm run check
 Use a new demo root each time. [Validation](docs/VALIDATION-v0.4.md) reports actual runs, failure injection and limitations. [Architecture](docs/ARCHITECTURE.md) explains which guarantees the adapter adds. MIT license for this adapter; upstream licenses remain with their projects.
 
 Session recovery and exact-call retry identity: [DSH integration](docs/DSH-INTEGRATION.md). Controlled comparison: [experiment report](docs/BENCHMARK.md).
+
+Real-data evaluation: [UCI retail and bike workflow experiments](docs/REAL-DATA-EXPERIMENTS.md), with [replay commands and DSH prompts](examples/real-data.md). These evaluate workflow safeguards and reproducible delivery; they do not establish better prediction accuracy or Agent productivity.

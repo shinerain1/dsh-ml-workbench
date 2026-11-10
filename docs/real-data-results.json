@@ -1,0 +1,915 @@
+{
+  "kind": "real-data-deterministic-workflow-comparison",
+  "model_calls": 0,
+  "agent_ab_test": false,
+  "environment": {
+    "python": "3.12.0",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "packages": {
+      "mlflow": "3.18.0",
+      "scikit-learn": "1.9.1",
+      "pandas": "2.3.3",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "cloudpickle": "3.1.2",
+      "joblib": "1.6.0"
+    }
+  },
+  "protocol_sha256": "8d83622d07b3b7e2265ecbee8d951f4bac720baa0795e8577cf63423c44762f6",
+  "provenance": {
+    "retail": {
+      "url": "https://archive.ics.uci.edu/static/public/352/online%2Bretail.zip",
+      "archive_sha256": "f5385cbb54bbebf7196389109c6b0621faab0c304e3702548165e71c84aede8b",
+      "license": "CC BY 4.0",
+      "audit": {
+        "raw_rows": 541909,
+        "missing_customer_removed": 135080,
+        "cancelled_removed": 8905,
+        "nonpositive_quantity_or_price_removed": 40,
+        "exact_duplicates_removed": 5192,
+        "clean_rows": 392692,
+        "unique_customers": 4338
+      },
+      "windows": [
+        {
+          "anchor": "2011-03-01",
+          "label_end_exclusive": "2011-04-01",
+          "feature_max_time": "2011-02-28T17:01:00",
+          "rows": 1682,
+          "positive_rate": 0.3103448275862069
+        },
+        {
+          "anchor": "2011-04-01",
+          "label_end_exclusive": "2011-05-01",
+          "feature_max_time": "2011-03-31T19:55:00",
+          "rows": 1776,
+          "positive_rate": 0.27871621621621623
+        },
+        {
+          "anchor": "2011-05-01",
+          "label_end_exclusive": "2011-06-01",
+          "feature_max_time": "2011-04-28T19:53:00",
+          "rows": 1891,
+          "positive_rate": 0.3638286620835537
+        },
+        {
+          "anchor": "2011-06-01",
+          "label_end_exclusive": "2011-07-01",
+          "feature_max_time": "2011-05-31T15:41:00",
+          "rows": 1959,
+          "positive_rate": 0.32414497192445124
+        },
+        {
+          "anchor": "2011-07-01",
+          "label_end_exclusive": "2011-08-01",
+          "feature_max_time": "2011-06-30T20:08:00",
+          "rows": 1969,
+          "positive_rate": 0.32046724225495177
+        },
+        {
+          "anchor": "2011-08-01",
+          "label_end_exclusive": "2011-09-01",
+          "feature_max_time": "2011-07-31T16:04:00",
+          "rows": 2025,
+          "positive_rate": 0.32395061728395064
+        },
+        {
+          "anchor": "2011-09-01",
+          "label_end_exclusive": "2011-10-01",
+          "feature_max_time": "2011-08-31T17:16:00",
+          "rows": 1923,
+          "positive_rate": 0.3785751430057202
+        },
+        {
+          "anchor": "2011-10-01",
+          "label_end_exclusive": "2011-11-01",
+          "feature_max_time": "2011-09-30T15:52:00",
+          "rows": 2151,
+          "positive_rate": 0.36262203626220363
+        },
+        {
+          "anchor": "2011-11-01",
+          "label_end_exclusive": "2011-12-01",
+          "feature_max_time": "2011-10-31T17:13:00",
+          "rows": 2461,
+          "positive_rate": 0.4290938642828119
+        }
+      ],
+      "derived_rows": 17837,
+      "derived_sha256": "856ce6ea646a1dab8231f99056a4e8fb779dffa6f7da13540cfed739e6562ce5",
+      "features": [
+        "invoices",
+        "spend",
+        "quantity",
+        "products",
+        "recency_days",
+        "average_basket"
+      ]
+    },
+    "bike": {
+      "url": "https://archive.ics.uci.edu/static/public/275/bike%2Bsharing%2Bdataset.zip",
+      "archive_sha256": "b70182d0d0508e9abbb79306ce5c0cec34869000f8220175ac83d11dbe845401",
+      "license": "CC BY 4.0",
+      "raw_rows": 17379,
+      "derived_rows": 17379,
+      "excluded_target_components": [
+        "casual",
+        "registered"
+      ],
+      "derived_sha256": "a189c01a9d7fd678f451ccea68855f422d368b24dc6776b2cf27e78a1a0b17af",
+      "features": [
+        "season",
+        "yr",
+        "mnth",
+        "hr",
+        "holiday",
+        "weekday",
+        "workingday",
+        "weathersit",
+        "temp",
+        "atemp",
+        "hum",
+        "windspeed"
+      ]
+    }
+  },
+  "datasets": [
+    {
+      "name": "retail",
+      "task": "classification",
+      "selection_metric": "average_precision",
+      "pairs": [
+        {
+          "run_id": "b65cba697e51487db0ec7714f2c6fab5",
+          "native_run_id": "fe836e156d564ec5a68f0ceb2e3e2cf2",
+          "seed": 7,
+          "model": "logistic_regression",
+          "metrics": {
+            "accuracy": 0.7109929078014184,
+            "balanced_accuracy": 0.6147237652511881,
+            "f1_macro": 0.6116228592958087,
+            "log_loss": 0.5778357187614801,
+            "roc_auc": 0.7030659622338651,
+            "average_precision": 0.6121427835145792
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.039644100004807115,
+          "direct_fit_seconds": 0.015176300017628819,
+          "plugin_workflow_seconds": 25.397633599990513,
+          "direct_workflow_seconds": 4.004573100013658,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "67e856225af847629ddb8f93f5dcd3a7",
+          "native_run_id": "cd81788261234180828254aff6962685",
+          "seed": 7,
+          "model": "random_forest",
+          "metrics": {
+            "accuracy": 0.711499493414387,
+            "balanced_accuracy": 0.632405223954623,
+            "f1_macro": 0.6367425765345133,
+            "log_loss": 0.5882049698858551,
+            "roc_auc": 0.6990918328929688,
+            "average_precision": 0.6054611966986345
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.7261739000095986,
+          "direct_fit_seconds": 0.5655710999853909,
+          "plugin_workflow_seconds": 14.969505400047638,
+          "direct_workflow_seconds": 2.5430980999954045,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "beefece44f254d73bdd3d7b6b53b1fc7",
+          "native_run_id": "16d67ab88cba43dd91b85a167a0a861e",
+          "seed": 7,
+          "model": "hist_gradient_boosting",
+          "metrics": {
+            "accuracy": 0.7168186423505573,
+            "balanced_accuracy": 0.6350040128772781,
+            "f1_macro": 0.6393254868275386,
+            "log_loss": 0.5732818198044248,
+            "roc_auc": 0.7110143618172473,
+            "average_precision": 0.6167479114284296
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.1307950000045821,
+          "direct_fit_seconds": 0.10803810000652447,
+          "plugin_workflow_seconds": 14.227778500004206,
+          "direct_workflow_seconds": 1.8162360999849625,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "de76415fb965423e91a6bce28e260df4",
+          "native_run_id": "8b7cafa0dbc1492cadd80070a72cc2cd",
+          "seed": 19,
+          "model": "logistic_regression",
+          "metrics": {
+            "accuracy": 0.7109929078014184,
+            "balanced_accuracy": 0.6147237652511881,
+            "f1_macro": 0.6116228592958087,
+            "log_loss": 0.5778357187614801,
+            "roc_auc": 0.7030659622338651,
+            "average_precision": 0.6121427835145792
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.03981469996506348,
+          "direct_fit_seconds": 0.013071099994704127,
+          "plugin_workflow_seconds": 13.645018599985633,
+          "direct_workflow_seconds": 1.4872270000050776,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "07c7bd5ce85b4898b76929069e956102",
+          "native_run_id": "5814fc908b4a4fe7b8cf8bcf2f3a8e2f",
+          "seed": 19,
+          "model": "random_forest",
+          "metrics": {
+            "accuracy": 0.7127659574468085,
+            "balanced_accuracy": 0.6325489435762401,
+            "f1_macro": 0.6367539716616574,
+            "log_loss": 0.5881550660115406,
+            "roc_auc": 0.6991614382783404,
+            "average_precision": 0.6046667309698985
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.640961299999617,
+          "direct_fit_seconds": 0.5456691000144929,
+          "plugin_workflow_seconds": 14.848397900001146,
+          "direct_workflow_seconds": 2.5089994000154547,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "bf818c204928411db702aeadb0ce4129",
+          "native_run_id": "2471563d21fd4de28aecfb67711620ea",
+          "seed": 19,
+          "model": "hist_gradient_boosting",
+          "metrics": {
+            "accuracy": 0.7168186423505573,
+            "balanced_accuracy": 0.6350040128772781,
+            "f1_macro": 0.6393254868275386,
+            "log_loss": 0.5732818198044248,
+            "roc_auc": 0.7110143618172473,
+            "average_precision": 0.6167479114284296
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.12959999998565763,
+          "direct_fit_seconds": 0.1070666000014171,
+          "plugin_workflow_seconds": 14.138714600005187,
+          "direct_workflow_seconds": 1.9704533000476658,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "98801610d10b4144a9927a96cc158048",
+          "native_run_id": "c74204cc7dca4873ae97a5aae26f0d2c",
+          "seed": 41,
+          "model": "logistic_regression",
+          "metrics": {
+            "accuracy": 0.7109929078014184,
+            "balanced_accuracy": 0.6147237652511881,
+            "f1_macro": 0.6116228592958087,
+            "log_loss": 0.5778357187614801,
+            "roc_auc": 0.7030659622338651,
+            "average_precision": 0.6121427835145792
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.03744029998779297,
+          "direct_fit_seconds": 0.011532499978784472,
+          "plugin_workflow_seconds": 13.561776200018357,
+          "direct_workflow_seconds": 1.4982557999901474,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "21df846594ad4c38a66664f04c869ec9",
+          "native_run_id": "456d4304d4a24d61938c0b724b667edf",
+          "seed": 41,
+          "model": "random_forest",
+          "metrics": {
+            "accuracy": 0.7109929078014184,
+            "balanced_accuracy": 0.632347736105976,
+            "f1_macro": 0.6367343551809571,
+            "log_loss": 0.5867063808867413,
+            "roc_auc": 0.701093199074784,
+            "average_precision": 0.6060700897417639
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.5850549999740906,
+          "direct_fit_seconds": 0.5159812999772839,
+          "plugin_workflow_seconds": 16.558021900011227,
+          "direct_workflow_seconds": 2.75462849996984,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "8d77d7e6806742f198e0fc578021d153",
+          "native_run_id": "5fabfbc4274549e9ad47985f53b1acbf",
+          "seed": 41,
+          "model": "hist_gradient_boosting",
+          "metrics": {
+            "accuracy": 0.7168186423505573,
+            "balanced_accuracy": 0.6350040128772781,
+            "f1_macro": 0.6393254868275386,
+            "log_loss": 0.5732818198044248,
+            "roc_auc": 0.7110143618172473,
+            "average_precision": 0.6167479114284296
+          },
+          "dummy_metrics": {
+            "accuracy": 0.6494427558257345,
+            "balanced_accuracy": 0.5,
+            "f1_macro": 0.39373464373464373,
+            "log_loss": 0.6498670787906868,
+            "roc_auc": 0.5,
+            "average_precision": 0.3505572441742654
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.2318815999897197,
+          "direct_fit_seconds": 0.09317420003935695,
+          "plugin_workflow_seconds": 19.51254120003432,
+          "direct_workflow_seconds": 1.9405882999999449,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        }
+      ],
+      "branch_checks": [
+        {
+          "parent_run_id": "b65cba697e51487db0ec7714f2c6fab5",
+          "child_run_id": "67e856225af847629ddb8f93f5dcd3a7",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "b65cba697e51487db0ec7714f2c6fab5",
+          "child_run_id": "beefece44f254d73bdd3d7b6b53b1fc7",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "de76415fb965423e91a6bce28e260df4",
+          "child_run_id": "07c7bd5ce85b4898b76929069e956102",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "de76415fb965423e91a6bce28e260df4",
+          "child_run_id": "bf818c204928411db702aeadb0ce4129",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "98801610d10b4144a9927a96cc158048",
+          "child_run_id": "21df846594ad4c38a66664f04c869ec9",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "98801610d10b4144a9927a96cc158048",
+          "child_run_id": "8d77d7e6806742f198e0fc578021d153",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        }
+      ],
+      "partitions": {
+        "final_test": {
+          "rows": 4612,
+          "start": "2011-10-01T00:00:00",
+          "end": "2011-11-01T00:00:00",
+          "target_mean": 0.39809193408499566
+        },
+        "test": {
+          "rows": 3948,
+          "start": "2011-08-01T00:00:00",
+          "end": "2011-09-01T00:00:00",
+          "target_mean": 0.3505572441742654
+        },
+        "train": {
+          "rows": 9277,
+          "start": "2011-03-01T00:00:00",
+          "end": "2011-07-01T00:00:00",
+          "target_mean": 0.32025439258380944
+        }
+      },
+      "split_sha256": "a1eaec6fa1169c8e15c5dd89619ead749414d2c42695cba383a745397386c4bd",
+      "selected_run_id": "beefece44f254d73bdd3d7b6b53b1fc7",
+      "final_test": {
+        "role": "final_test",
+        "rows": 4612,
+        "metrics": {
+          "accuracy": 0.6747614917606245,
+          "balanced_accuracy": 0.6117907617738098,
+          "f1_macro": 0.5994335789306926,
+          "log_loss": 0.6261407056868179,
+          "roc_auc": 0.6800010830460906,
+          "average_precision": 0.6277262824995316
+        },
+        "run_id": "beefece44f254d73bdd3d7b6b53b1fc7",
+        "partition_key": "52eaf525e18c0e92a1ec83fa72dc26b8c212fa31bbb800c79c62c72d30f6ea72",
+        "note": "Model selection was committed before evaluation. This local workflow guard is not access control over the source CSV."
+      },
+      "random_split_diagnostic": {
+        "run_id": "712b57c7aba14f4aa481df46e74aff9c",
+        "validation_metrics": {
+          "accuracy": 0.7118834080717489,
+          "balanced_accuracy": 0.6251890834275069,
+          "f1_macro": 0.6280388942771251,
+          "log_loss": 0.587896259176067,
+          "roc_auc": 0.6845040131603799,
+          "average_precision": 0.591558900886739
+        },
+        "final_test_evaluated": false
+      },
+      "direct_explicit_controls": {
+        "key_lookup_recovers_same_run": true,
+        "split_hash_rejects_comparison": true,
+        "hash_check_detects_mutation": true,
+        "selection_tag_rejects_another_model": true,
+        "raw_get_run_does_not_check_external_file_mutation": true
+      },
+      "direct_independent_retraining": {
+        "validation_match": true,
+        "final_match": true
+      },
+      "workflow_checks": {
+        "mixed_split_comparison": {
+          "passed": true,
+          "code": "INCOMPARABLE_EXPERIMENTS",
+          "message": "Evaluation conditions differ: split_sha256"
+        },
+        "second_final_selection": {
+          "passed": true,
+          "code": "FINAL_TEST_ALREADY_SELECTED",
+          "message": "This final-test partition is committed to another model; do not select models using final-test scores"
+        },
+        "mutated_model_export": {
+          "passed": true,
+          "code": "INTEGRITY_MISMATCH",
+          "message": "Snapshot files changed: model/model.pkl"
+        },
+        "backend_reopen_session_navigation": {
+          "passed": true,
+          "candidate_runs_found": 9
+        },
+        "lost_response_stable_key": {
+          "passed": true,
+          "unique_runs": 1
+        },
+        "same_final_selection_replay": {
+          "passed": true
+        },
+        "independent_standalone_retraining": {
+          "passed": true,
+          "result": {
+            "verified_files": 22,
+            "metrics_match": true,
+            "final_test_metrics_match": true,
+            "recorded": {
+              "accuracy": 0.7168186423505573,
+              "balanced_accuracy": 0.6350040128772781,
+              "f1_macro": 0.6393254868275386,
+              "log_loss": 0.5732818198044248,
+              "roc_auc": 0.7110143618172473,
+              "average_precision": 0.6167479114284296
+            },
+            "reproduced": {
+              "accuracy": 0.7168186423505573,
+              "balanced_accuracy": 0.6350040128772781,
+              "f1_macro": 0.6393254868275386,
+              "log_loss": 0.5732818198044248,
+              "roc_auc": 0.7110143618172473,
+              "average_precision": 0.6167479114284296
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "bike",
+      "task": "regression",
+      "selection_metric": "rmse",
+      "pairs": [
+        {
+          "run_id": "17c8665031964f0092c12314f1eff7dd",
+          "native_run_id": "97208238d5534cd180b772d6275e3bf1",
+          "seed": 7,
+          "model": "ridge",
+          "metrics": {
+            "rmse": 138.97918562789127,
+            "mae": 106.52121371166263,
+            "r2": 0.5840620421526566
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.32337050000205636,
+          "direct_fit_seconds": 0.0510694999829866,
+          "plugin_workflow_seconds": 14.002687200030778,
+          "direct_workflow_seconds": 1.5612694000010379,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "8257ce68867d499ebd83a1e7069f57b7",
+          "native_run_id": "bebc8e282c0441e9a28388a122da5c60",
+          "seed": 7,
+          "model": "random_forest",
+          "metrics": {
+            "rmse": 123.48074603067394,
+            "mae": 89.89003046795291,
+            "r2": 0.6716571832669005
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 2.0100609000073746,
+          "direct_fit_seconds": 1.981059399957303,
+          "plugin_workflow_seconds": 14.917619399959221,
+          "direct_workflow_seconds": 4.468060899991542,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "ca6920ce275e4a8d97c83e6cfa47d654",
+          "native_run_id": "5bc5b3c057834695a8b1f8f38a1599bd",
+          "seed": 7,
+          "model": "hist_gradient_boosting",
+          "metrics": {
+            "rmse": 106.2906648746635,
+            "mae": 76.10716193723289,
+            "r2": 0.7567127902558388
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.37119809997966513,
+          "direct_fit_seconds": 0.2655545999878086,
+          "plugin_workflow_seconds": 13.484318599977996,
+          "direct_workflow_seconds": 1.7530103999888524,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "b01ecda4b50143079656c4ede4b35e22",
+          "native_run_id": "5405f001a23d40d4ae12cd38de375c27",
+          "seed": 19,
+          "model": "ridge",
+          "metrics": {
+            "rmse": 138.97918562789127,
+            "mae": 106.52121371166263,
+            "r2": 0.5840620421526566
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.07228170003509149,
+          "direct_fit_seconds": 0.048375300015322864,
+          "plugin_workflow_seconds": 12.08709370001452,
+          "direct_workflow_seconds": 1.8878254999872297,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "898c206b002b426686cb70dcc797c8a4",
+          "native_run_id": "6a056e5d2d3b40d48935a4c85b0ea36d",
+          "seed": 19,
+          "model": "random_forest",
+          "metrics": {
+            "rmse": 124.38152343145339,
+            "mae": 90.75832927065325,
+            "r2": 0.6668492665762558
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 2.047598699980881,
+          "direct_fit_seconds": 2.0407622999628074,
+          "plugin_workflow_seconds": 15.318477099994197,
+          "direct_workflow_seconds": 3.853173900046386,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "560ec9eb18a149c48502d5f8530503c7",
+          "native_run_id": "cf924e9fc0e748f38632e3113a0c6438",
+          "seed": 19,
+          "model": "hist_gradient_boosting",
+          "metrics": {
+            "rmse": 107.44918837108882,
+            "mae": 76.51511010213468,
+            "r2": 0.7513804312214776
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.2748041999875568,
+          "direct_fit_seconds": 0.27400740003213286,
+          "plugin_workflow_seconds": 12.70484950003447,
+          "direct_workflow_seconds": 1.7594351000152528,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "296a515540944dba96b61d89bda6a81e",
+          "native_run_id": "489a253f1656404e9f8fc438fae5272f",
+          "seed": 41,
+          "model": "ridge",
+          "metrics": {
+            "rmse": 138.97918562789127,
+            "mae": 106.52121371166263,
+            "r2": 0.5840620421526566
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.07264710002345964,
+          "direct_fit_seconds": 0.04919389996211976,
+          "plugin_workflow_seconds": 12.54802569997264,
+          "direct_workflow_seconds": 1.8148599000414833,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "7ca6b40c4c4643b9b92a7e08b1afd7f0",
+          "native_run_id": "c263ae2793274107a6ad4358c1498a85",
+          "seed": 41,
+          "model": "random_forest",
+          "metrics": {
+            "rmse": 124.18623577392557,
+            "mae": 90.42279476688091,
+            "r2": 0.6678945850447301
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 2.0099227000027895,
+          "direct_fit_seconds": 1.9861822000239044,
+          "plugin_workflow_seconds": 14.854509200027678,
+          "direct_workflow_seconds": 3.8463934999890625,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        },
+        {
+          "run_id": "3be5b0d2aef94301935dda1758160708",
+          "native_run_id": "d6709acaa78440e08155cf8e551fc576",
+          "seed": 41,
+          "model": "hist_gradient_boosting",
+          "metrics": {
+            "rmse": 108.11449976744939,
+            "mae": 78.23183344118833,
+            "r2": 0.7482920592788724
+          },
+          "dummy_metrics": {
+            "rmse": 246.34255736375215,
+            "mae": 187.66002634017664,
+            "r2": -0.30679637618566713
+          },
+          "maximum_absolute_metric_delta": 0.0,
+          "plugin_fit_seconds": 0.2711841000127606,
+          "direct_fit_seconds": 0.2669745000312105,
+          "plugin_workflow_seconds": 13.623530700046103,
+          "direct_workflow_seconds": 1.7693806000170298,
+          "plugin_record_categories": 8,
+          "direct_record_categories": 8
+        }
+      ],
+      "branch_checks": [
+        {
+          "parent_run_id": "17c8665031964f0092c12314f1eff7dd",
+          "child_run_id": "8257ce68867d499ebd83a1e7069f57b7",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "17c8665031964f0092c12314f1eff7dd",
+          "child_run_id": "ca6920ce275e4a8d97c83e6cfa47d654",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "b01ecda4b50143079656c4ede4b35e22",
+          "child_run_id": "898c206b002b426686cb70dcc797c8a4",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "b01ecda4b50143079656c4ede4b35e22",
+          "child_run_id": "560ec9eb18a149c48502d5f8530503c7",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "296a515540944dba96b61d89bda6a81e",
+          "child_run_id": "7ca6b40c4c4643b9b92a7e08b1afd7f0",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        },
+        {
+          "parent_run_id": "296a515540944dba96b61d89bda6a81e",
+          "child_run_id": "3be5b0d2aef94301935dda1758160708",
+          "parent_outputs_unchanged": true,
+          "fitted_preprocessor_identical": true
+        }
+      ],
+      "partitions": {
+        "final_test": {
+          "rows": 3476,
+          "start": "2012-08-07T12:00:00",
+          "end": "2012-12-31T23:00:00",
+          "target_mean": 248.75460299194475
+        },
+        "test": {
+          "rows": 3476,
+          "start": "2012-03-15T14:00:00",
+          "end": "2012-08-07T11:00:00",
+          "target_mean": 264.15736478711165
+        },
+        "train": {
+          "rows": 10427,
+          "start": "2011-01-01T00:00:00",
+          "end": "2012-03-15T13:00:00",
+          "target_mean": 144.79687350148652
+        }
+      },
+      "split_sha256": "813a5be2842416fad87cba9aee9bfb17804034bad5f9f05574ccbb35fb25035a",
+      "selected_run_id": "ca6920ce275e4a8d97c83e6cfa47d654",
+      "final_test": {
+        "role": "final_test",
+        "rows": 3476,
+        "metrics": {
+          "rmse": 123.8696496639312,
+          "mae": 88.24985418421379,
+          "r2": 0.6843742399748707
+        },
+        "run_id": "ca6920ce275e4a8d97c83e6cfa47d654",
+        "partition_key": "5320d5409b2e047517a88b99e210d7ce7567b90ec470cb6ec5cd7514ca9a727f",
+        "note": "Model selection was committed before evaluation. This local workflow guard is not access control over the source CSV."
+      },
+      "random_split_diagnostic": {
+        "run_id": "1d02611034114e2392fd5c37a3755498",
+        "validation_metrics": {
+          "rmse": 60.43897669551836,
+          "mae": 39.236109956695174,
+          "r2": 0.888548953535206
+        },
+        "final_test_evaluated": false
+      },
+      "direct_explicit_controls": {
+        "key_lookup_recovers_same_run": true,
+        "split_hash_rejects_comparison": true,
+        "hash_check_detects_mutation": true,
+        "selection_tag_rejects_another_model": true,
+        "raw_get_run_does_not_check_external_file_mutation": true
+      },
+      "direct_independent_retraining": {
+        "validation_match": true,
+        "final_match": true
+      },
+      "workflow_checks": {
+        "mixed_split_comparison": {
+          "passed": true,
+          "code": "INCOMPARABLE_EXPERIMENTS",
+          "message": "Evaluation conditions differ: split_sha256"
+        },
+        "second_final_selection": {
+          "passed": true,
+          "code": "FINAL_TEST_ALREADY_SELECTED",
+          "message": "This final-test partition is committed to another model; do not select models using final-test scores"
+        },
+        "mutated_model_export": {
+          "passed": true,
+          "code": "INTEGRITY_MISMATCH",
+          "message": "Snapshot files changed: model/model.pkl"
+        },
+        "backend_reopen_session_navigation": {
+          "passed": true,
+          "candidate_runs_found": 9
+        },
+        "lost_response_stable_key": {
+          "passed": true,
+          "unique_runs": 1
+        },
+        "same_final_selection_replay": {
+          "passed": true
+        },
+        "independent_standalone_retraining": {
+          "passed": true,
+          "result": {
+            "verified_files": 22,
+            "metrics_match": true,
+            "final_test_metrics_match": true,
+            "recorded": {
+              "rmse": 106.2906648746635,
+              "mae": 76.10716193723289,
+              "r2": 0.7567127902558388
+            },
+            "reproduced": {
+              "rmse": 106.2906648746635,
+              "mae": 76.10716193723289,
+              "r2": 0.7567127902558388
+            }
+          }
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Shared frozen recipe isolates workflow behavior, not independently authored Agent code.",
+    "Injected checks do not estimate real-world error frequency.",
+    "Single-machine sequential timings include cache/order effects; no speed claim.",
+    "Final holdout is used once per dataset; no confidence interval or external validation.",
+    "Direct MLflow with explicit checks can implement the same protections."
+  ]
+}

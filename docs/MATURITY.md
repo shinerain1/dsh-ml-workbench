@@ -24,3 +24,5 @@ Official sources reviewed for the gap analysis:
 - [scikit-learn evaluation guidance](https://scikit-learn.org/stable/modules/cross_validation.html) and [GroupShuffleSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupShuffleSplit.html): evaluation must reflect grouped or temporal data, and repeated model selection requires independent final assessment.
 
 Supported deployment: one trusted local user, UTF-8 CSV up to 128 MiB, bounded sequential CPU fits, Windows verified. Raw CSVs, fitted Python models and custom factories remain local. Custom code must be reviewed and explicitly enabled. Cross-platform and large-scale performance have not been established.
+
+The [real-data evaluation](REAL-DATA-EXPERIMENTS.md) adds UCI retail classification and bike regression with 18 paired fixed-recipe MLflow comparisons, branch/integrity checks, independent delivery retraining and a real DSH PTC workflow. It retains the stronger direct-MLflow positive controls and reports the plugin's process/verification overhead. These mechanism experiments do not replace repeated live-Agent trials or establish business ROI.

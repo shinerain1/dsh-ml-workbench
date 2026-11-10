@@ -1,0 +1,59 @@
+{
+  "kind": "real-data-real-dsh-ptc",
+  "model_calls": 0,
+  "execution_mode": "dsh",
+  "policy": "workspace-write",
+  "platform": "win32",
+  "outer_calls_for_workflow": 1,
+  "nested_calls_for_workflow": 8,
+  "replay_same_run_ids": true,
+  "replay_same_final_metrics": true,
+  "plugin_remount_session_recovered": true,
+  "completed": {
+    "run_ids": [
+      "4ed53b00c2e54c579c90fe7258b9cb6a",
+      "b0b0e1efe7c14c96bbe851be5eabe049"
+    ],
+    "selected": "b0b0e1efe7c14c96bbe851be5eabe049",
+    "reused_preprocessing": true,
+    "validation": [
+      {
+        "model": "hist_gradient_boosting",
+        "metrics": {
+          "accuracy": 0.7168186423505573,
+          "balanced_accuracy": 0.6350040128772781,
+          "f1_macro": 0.6393254868275386,
+          "log_loss": 0.5732818198044248,
+          "roc_auc": 0.7110143618172473,
+          "average_precision": 0.6167479114284296
+        }
+      },
+      {
+        "model": "logistic_regression",
+        "metrics": {
+          "accuracy": 0.7109929078014184,
+          "balanced_accuracy": 0.6147237652511881,
+          "f1_macro": 0.6116228592958087,
+          "log_loss": 0.5778357187614801,
+          "roc_auc": 0.7030659622338651,
+          "average_precision": 0.6121427835145792
+        }
+      }
+    ],
+    "final_test": {
+      "accuracy": 0.6747614917606245,
+      "balanced_accuracy": 0.6117907617738098,
+      "f1_macro": 0.5994335789306926,
+      "log_loss": 0.6261407056868179,
+      "roc_auc": 0.6800010830460906,
+      "average_precision": 0.6277262824995316
+    },
+    "delivery": "<temporary-workspace>\\records\\exports\\b0b0e1efe7c14c96bbe851be5eabe049-7d80d9e0.zip"
+  },
+  "limitations": [
+    "No LLM calls or Agent token/human-intervention comparison.",
+    "Plugin remount reuses the DSH Session; this is not a full DSH process restart.",
+    "This separate integration workspace repeats a fixed workflow; it is not another independent statistical test."
+  ],
+  "context_disposed": true
+}

@@ -111,3 +111,5 @@ python reproduce.py --data /path/to/original.csv
 [验证报告](docs/VALIDATION-v0.4.md) 区分确定性集成测试与真实 Agent 对照实验。已运行的合成数据结果不能被写成真实复购业务收益，也不能推导“减少人工介入”的结论。
 
 新增 DSH 会话关联、同一调用的自动去重和 `ml_workbench_resume` 恢复工具。详见 [DSH 适配说明](docs/DSH-INTEGRATION.md)和[对照实验报告](docs/BENCHMARK.md)。
+
+新增[真实数据实验报告](docs/REAL-DATA-EXPERIMENTS.md)：UCI 客户复购与单车需求两组任务，检验多轮分支、比较约束、恢复和交付复现。[复跑命令与 DSH 演示提示词](examples/real-data.md)可直接使用。这里验证的是流程保障，不等于更高预测准确率或更少人工介入。
