@@ -1,0 +1,47 @@
+{
+  "release": "https://github.com/shinerain1/dsh-ml-workbench/releases/tag/v0.4.0",
+  "version": "v0.4.0",
+  "source_commit": "86d2bb6602aa5d33ccbac5a6318ea22061ede970",
+  "assets": [
+    {
+      "name": "dsh-ml-workbench-0.4.0.tgz",
+      "sha256": "00190a41b6c08a7b2bcadec7a9b72a3150b4e794bd14aac5bbe5ba78ff2aca25",
+      "github_digest_matches": true
+    },
+    {
+      "name": "dsh_ml_workbench-0.4.0-py3-none-any.whl",
+      "sha256": "51b27994add1f1d10e6e36c736a7fda497bef8491fc721cadd4c93750a3430b1",
+      "github_digest_matches": true
+    },
+    {
+      "name": "dsh_ml_workbench-0.4.0.tar.gz",
+      "sha256": "5046e7330a69c106223a2cd2f02fc4881718df4ab9a133126527bcfce442ba9a",
+      "github_digest_matches": true
+    },
+    {
+      "name": "requirements.lock",
+      "sha256": "c19fdc0cc6048b57ca8aaeeae37c6d6b97adea9f262e8ed1747ddfdea1e19370",
+      "github_digest_matches": true
+    },
+    {
+      "name": "SHA256SUMS-v0.4.0.txt",
+      "sha256": "66e1547d95aa84e7a5bffc0af4a660f78be2caaa0155435ecda66990c5920c25",
+      "github_digest_matches": true
+    }
+  ],
+  "public_index_json_verified": true,
+  "index_versions": [
+    "0.4.0",
+    "0.3.0",
+    "0.2.0",
+    "0.1.0"
+  ],
+  "dsh_public_git_install": "passed",
+  "installed_bundle_native_executor": "passed",
+  "dsh_profile_runtime_resolution": "passed",
+  "sdk_peers_resolved_from_dsh_host": true,
+  "native_tool_count": 20,
+  "backend_installed_wheel": "0.4.0",
+  "unload": "passed",
+  "peer_check_note": "Plain pnpm reports host SDK peers absent from the profile manifest. The real DSH profile resolver supplied both from its installation anchor; the installed plugin loaded, health succeeded, and unload removed all tools."
+}

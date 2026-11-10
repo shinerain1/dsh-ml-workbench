@@ -20,6 +20,8 @@ The full Python pass contained 34 passes and one failure from Python bytecode be
 
 Packaging evidence is recorded separately in [installed-wheel and reproduction results](packaging-v4-results.json). A new isolated venv was created with the installation helper. The final installation diagnostic passed; the helper generated a config snippet without touching a DSH profile. Separate classification/regression delivery copies refitted new estimators and matched validation/final-test scores. The verification harness explicitly decodes UTF-8 JSON so Chinese workspace paths work consistently. The installed wheel also passed actual DSH Native registry/health/unload with 20 tools.
 
+[Post-publication verification](publication-v4.json) confirms all five GitHub asset digests, the public raw index and its pinned commit, and public Git installation through DSH's CLI. `scripts/dsh-profile-smoke.mjs` loads that installation with DSH's actual profile resolver, asserts both SDK peers resolve from the DSH installation anchor, and checks 20 tools, health and unload. Plain pnpm reports those host-provided peers absent from the profile manifest; the DSH resolver test passed without relying on the development project's copies.
+
 ## What this establishes
 
 The new mechanisms prevent specific observed workflow mistakes: automatic tuning never evaluates the final partition, a second candidate cannot claim an already-selected final partition, polling is unnecessary for training timeout, and DSH mode cannot silently fall back to unconfined host spawning. The actual PTC program demonstrates that seven nested operations can be composed without seven model responses. It does not measure an LLM's ability to write that program or its token/time cost.
