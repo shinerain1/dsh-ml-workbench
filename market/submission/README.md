@@ -1,6 +1,8 @@
 # 社区插件广场投稿材料
 
-当前状态：**材料已准备，尚未提交广场收录 PR。**
+当前状态：**已于 2026-11-11 提交收录申请，等待维护者审核。** [PR #14173](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/14173)。
+
+本次已重新验证 v0.4.0 的公开下载和真实 DSH profile 加载（20 个工具），并用目录当前校验器检查仓库年龄和 manifest。见 [公开安装复验](public-install-2026-11-11.json)及[投稿记录](submission.json)。PR 的提交/自动检查通过都不等于维护者已经合并收录。
 
 投稿目标为 [awesome-dsh-plugin/awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)。
 [dsh-market 的投稿说明](https://github.com/dsh-market/dsh-market#submit-your-plugin)将收录导向这个目录；

@@ -1,0 +1,17 @@
+{
+    "checked_utc":  "2026-11-11T04:43:41.9245105Z",
+    "tarball":  "https://github.com/shinerain1/dsh-ml-workbench/releases/download/v0.4.0/dsh-ml-workbench-0.4.0.tgz",
+    "sha256":  "00190a41b6c08a7b2bcadec7a9b72a3150b4e794bd14aac5bbe5ba78ff2aca25",
+    "public_download_digest_matches":  true,
+    "public_dsh_cli_install":  "passed",
+    "profile":  {
+                    "public_profile_resolution":  "passed",
+                    "host_sdk_peers":  "passed",
+                    "native_tools":  20,
+                    "installed_backend":  "0.4.0",
+                    "health":  "passed",
+                    "unload":  "passed"
+                },
+    "backend":  "Existing independent wheel-installed .venv-release-v4",
+    "note":  "Repeated the profile smoke with a fresh temporary profile; adjusted only its fixed path assertion and state location, leaving the published v0.4.0 package unchanged."
+}

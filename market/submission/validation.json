@@ -1,25 +1,25 @@
 {
-  "kind": "community-catalog-format-and-asset-check",
-  "entry": "shinerain1__dsh-ml-workbench.yml",
-  "entry_sha256": "e051b3f418d82a86ce9c3d98170a297db9b1c47299294770b1d423282960f08f",
-  "validator": "https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/55f70e08a80e7b4b6c469ce38d0fd186b6f3c40e/scripts/lib/entries.mjs",
-  "entry_count": 1,
-  "format_passed": true,
-  "category": "workflow",
-  "bilingual": true,
-  "icon": {
-    "width": 180,
-    "height": 180,
-    "sha256": "c065bd52d66a8af90b152f38ac71867617abcef95b7daa16a69edc76d903b480"
-  },
-  "asset": {
-    "asset_sha256": "00190a41b6c08a7b2bcadec7a9b72a3150b4e794bd14aac5bbe5ba78ff2aca25",
-    "declared_bundle": true,
-    "prebuilt_bundle_and_backend_files_present": true,
-    "install_lifecycle_scripts": false,
-    "version": "0.4.0",
-    "bytes": 86472
-  },
-  "catalog_pr_submitted": false,
-  "scope": "Local catalog format and release-asset validation only; no remote submission gate or maintainer review."
+    "kind":  "community-catalog-format-and-asset-check",
+    "entry":  "shinerain1__dsh-ml-workbench.yml",
+    "entry_sha256":  "e051b3f418d82a86ce9c3d98170a297db9b1c47299294770b1d423282960f08f",
+    "validator":  "https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/55f70e08a80e7b4b6c469ce38d0fd186b6f3c40e/scripts/lib/entries.mjs",
+    "entry_count":  1,
+    "format_passed":  true,
+    "category":  "workflow",
+    "bilingual":  true,
+    "icon":  {
+                 "width":  180,
+                 "height":  180,
+                 "sha256":  "c065bd52d66a8af90b152f38ac71867617abcef95b7daa16a69edc76d903b480"
+             },
+    "asset":  {
+                  "asset_sha256":  "00190a41b6c08a7b2bcadec7a9b72a3150b4e794bd14aac5bbe5ba78ff2aca25",
+                  "declared_bundle":  true,
+                  "prebuilt_bundle_and_backend_files_present":  true,
+                  "install_lifecycle_scripts":  false,
+                  "version":  "0.4.0",
+                  "bytes":  86472
+              },
+    "catalog_pr_submitted":  true,
+    "scope":  "Original local format and release-asset validation; PR now submitted. See submission.json for current submission/check status. Maintainer approval is not claimed."
 }
