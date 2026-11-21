@@ -28,6 +28,7 @@
     "examples/*.py"
   ],
   "scripts": {
+    "prepublishOnly": "npm run check",
     "build": "tsc -p tsconfig.json",
     "build:check": "tsc -p tsconfig.json --noEmit",
     "test": "node --test tests-node/*.test.mjs",
@@ -69,5 +70,6 @@
     "type": "git",
     "url": "git+https://github.com/shinerain1/dsh-ml-workbench.git"
   },
-  "homepage": "https://github.com/shinerain1/dsh-ml-workbench#readme"
+  "homepage": "https://github.com/shinerain1/dsh-ml-workbench#readme",
+  "bugs": {"url": "https://github.com/shinerain1/dsh-ml-workbench/issues"}
 }
